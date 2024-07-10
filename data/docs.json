@@ -1,0 +1,12 @@
+{
+    "documents": [
+        {
+            "image_name": "doc1",
+            "cocojson_name": "json1"
+        },
+        {
+            "image_name": "doc2",
+            "cocojson_name": "json2"
+        }
+    ]
+}

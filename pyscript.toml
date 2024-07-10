@@ -1,0 +1,16 @@
+name = "Firsr PyScript App"
+description = "An example of how to build pyscript app."
+packages = ["Pillow", "distinctipy"]
+[files]
+"{FROM}" = "http://localhost:5500"
+"{TO}" = "."
+
+
+"{FROM}/data/docs/00001/TM065797_The_Curse_of_Artemisia_Fragment_WDL4310.jpg" = "{TO}/data/docs/00001/TM065797_The_Curse_of_Artemisia_Fragment_WDL4310.jpg"
+"{FROM}/data/docs/00001/predictions_9.json" = "{TO}/data/docs/00001/predictions_9.json"
+
+"{FROM}/src/manager.py" = "{TO}/"
+"{FROM}/src/file_manager.py" = "{TO}/"
+"{FROM}/assets/Anonymous_Pro.ttf" = "{TO}/assets/Anonymous_Pro.ttf"
+
+
