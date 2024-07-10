@@ -1,6 +1,6 @@
 # Annotation Correction Tool
 
-## Premapre your Machine
+## Prepare your Machine
 To prepare your machine, the only requirement is to install Python. You can easily download the installer from the official website: https://www.python.org/downloads/
 
 **_NOTE:_** Pay attention to select the two checkboxes as shown in the image below!![alt text](assets/python_install.png)
