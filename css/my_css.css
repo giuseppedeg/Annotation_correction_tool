@@ -244,6 +244,7 @@
 
 #full_image{
     width: 98%;
+    max-height: 700px;
 }
 
 

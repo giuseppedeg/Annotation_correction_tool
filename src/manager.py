@@ -114,6 +114,8 @@ class Manager:
         self.img_path = img
         self.img_name = os.path.basename(img)
         self.img = Image.open(img)
+        if self.img.mode != "RGB":
+            self.img = self.img.convert("RGB")
         self.font = ImageFont.truetype(font=font, size=font_size)
         self.width_bb = width_bb
         self.cocojsaon_name = coco_json

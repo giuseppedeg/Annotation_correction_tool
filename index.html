@@ -59,34 +59,10 @@
                 </tr>
               </thead>
 
-              <tbody>
-                <tr>
-
-                  <td>1</td>
-                  <td>The Curse of Artemisia - Fragment</td>             
-                  <td>
-                    <div class="btn-group">
-                      <button type="button" class="btn btn-info">Action</button>
-                      <button type="button" class="btn btn-info dropdown-toggle" data-toggle="dropdown">
-                        <span class="caret"></span>
-                        <span class="sr-only">Toggle Dropdown</span>
-                      </button>
-                      <ul class="dropdown-menu" role="menu">
-                        <li><a href="#">Train</a></li>
-                        <li><a href="#">Re-Train</a></li>
-                        <li><a href="#">Upload JSON</a></li>
-                      </ul>
-                    </div>
-                  </td>
-                  <td><a href="corrector.html?json_file=data/docs/00001/predictions_9.json&img_file=data/docs/00001/TM065797_The_Curse_of_Artemisia_Fragment_WDL4310.jpg" class="btn btn-success">Load</a></td>     
-                  <td><a href="#" class="btn btn-danger">Delete</a></td>     
-                </tr>
+              <tbody id="doc_table">
+                <!-- AUTO DEFINITION: see file data/docs.json -->
 
 
-                
-                
-                  
-                    
               </tbody>
             </table>
           </div>
@@ -144,6 +120,110 @@
     <script src="js/bootstrap.min.js"></script>
     <script src="js/Chart.min.js"></script>
     <script src="js/templatemo_script.js"></script>
+
+    <script>
+      
+    </script>
+    <script>
+    
+      function fetchJSONData() {
+          table = document.getElementById("doc_table");
+          fetch("data/docs.json")
+              .then((res) => {
+                  if (!res.ok) {
+                      throw new Error
+                          (`HTTP error! Status: ${res.status}`);
+                  }
+                  return res.json();
+              })
+              .then((data) =>{
+                // define table rows
+                for (var i = 0; i < data["documents"].length; i++){
+                  const tr = document.createElement("tr");
+
+                  td = document.createElement("td");
+                  td.innerHTML = data["documents"][i]["image_id"];
+                  tr.appendChild(td);
+
+                  td = document.createElement("td");
+                  td.innerHTML = data["documents"][i]["image_name"];
+                  tr.appendChild(td);
+
+                  td = document.createElement("td");
+                    div = document.createElement("div");
+                      div.classList.add("btn-group");
+                        button = document.createElement("button");
+                        button.setAttribute('type', "buttton");
+                        button.classList.add("btn");
+                        button.classList.add("btn-info");
+                        button.innerHTML = "Action";
+                        div.appendChild(button);
+
+                        button = document.createElement("button");
+                        button.setAttribute('type', "buttton");
+                        button.classList.add("btn");
+                        button.classList.add("btn-info");
+                        button.classList.add("dropdown-toggle");
+                        button.setAttribute('data-toggle', "dropdown");
+                          span = document.createElement("span");
+                          span.classList.add("caret");
+                          button.appendChild(span);
+
+                          span = document.createElement("span");
+                          span.classList.add("sr-only");
+                          span.innerHTML = "Toggle Dropdown";
+                          button.appendChild(span);
+                        div.appendChild(button);
+
+                        ul = document.createElement("ul");
+                        ul.classList.add("dropdown-menu");
+                        ul.setAttribute('role', "menu");
+                          li = document.createElement("li");
+                            a = document.createElement("a");
+                            a.setAttribute('href', "#");
+                            a.innerHTML = "Train"
+                            li.appendChild(a)
+                          ul.appendChild(li)
+
+                          li = document.createElement("li");
+                            a = document.createElement("a");
+                            a.setAttribute('href', "#");
+                            a.innerHTML = "Re-Train"
+                            li.appendChild(a)
+                          ul.appendChild(li)
+
+                        div.appendChild(ul);
+                    td.appendChild(div)
+                  tr.appendChild(td)
+
+                  td = document.createElement("td");
+                    a = document.createElement("a");
+                    a.setAttribute('href', "corrector.html?json_file=data/docs/"+data["documents"][i]["image_id"]+"/"+data["documents"][i]["cocojson_name"]+"&img_file=data/docs/"+data["documents"][i]["image_id"]+"/"+data["documents"][i]["image_name"]);
+                    a.classList.add("btn");
+                    a.classList.add("btn-success");
+                    a.innerHTML = "Load";
+                    td.appendChild(a);
+                  tr.appendChild(td);
+
+                  td = document.createElement("td");
+                    a = document.createElement("a");
+                    a.setAttribute('href', "#");
+                    a.classList.add("btn");
+                    a.classList.add("btn-danger");
+                    a.innerHTML = "Delete";
+                    td.appendChild(a);
+                  tr.appendChild(td);
+
+                  table.appendChild(tr)
+
+                };
+              })
+              .catch((error) =>
+                  console.error("Unable to fetch data:", error));
+      }
+
+      fetchJSONData();
+  </script>
     
     
 </body>

@@ -1,12 +1,9 @@
 {
     "documents": [
         {
-            "image_name": "doc1",
-            "cocojson_name": "json1"
-        },
-        {
-            "image_name": "doc2",
-            "cocojson_name": "json2"
+            "image_id": "00000",
+            "image_name": "TM065797_The_Curse_of_Artemisia_Fragment_WDL4310.jpg",
+            "cocojson_name": "predictions_9.json"
         }
     ]
 }

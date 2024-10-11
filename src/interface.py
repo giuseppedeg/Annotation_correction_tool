@@ -19,8 +19,6 @@ input_bb_image_name = input_bb_image_name.value # it's a str
 input_bb_json_name = input_bb_json_name.value # it's a str
 input_bb_image_id = os.path.splitext(os.path.basename(input_bb_image_name))[0]
 
-my_image = Image.open(input_bb_image_name)
-
 m = Manager(input_bb_image_name, input_bb_json_name,  font="assets/Anonymous_Pro.ttf")
 m.set_all_bt_categories_default() #Set to BT1 all annotation without bt
 
