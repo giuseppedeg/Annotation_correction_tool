@@ -54,7 +54,7 @@ class Overlappinglist:
         self.lenght += 1
 
         if self.id_elements_innode:
-            self._insert_idelement_innode(data, new_node)
+            self._insert_idelement_innode(new_node)
     
     def append(self, data):
         new_node = self.Node(data)
@@ -72,11 +72,18 @@ class Overlappinglist:
         self.lenght += 1
 
         if self.id_elements_innode:
-            self._insert_idelement_innode(data, new_node)
+            self._insert_idelement_innode(new_node)
 
-    def _insert_idelement_innode(self, data, node):
-        for element in data:
-            self.ids_innode[element["id"]] = node
+    def _insert_idelement_innode(self, node):
+        for element in node.data:
+            if element["id"] in self.ids_innode:
+                old_node = self.ids_innode[element["id"]]
+
+                if len(node.data) > len(old_node.data):
+                    self.ids_innode[element["id"]] = node
+            else:
+                self.ids_innode[element["id"]] = node
+            
 
     def remove_node(self, data):
         if data is None:
@@ -87,14 +94,23 @@ class Overlappinglist:
 
         while current_node != None:
             if current_node.data == data:
-                current_node.prev = current_node.next
-                current_node.next = current_node.prev
+                prev_node = current_node.prev
+                next_node = current_node.next
+                current_node.prev = next_node
+                current_node.next = prev_node
                 removed_node = current_node
                 self.lenght -= 1
+                #self.current_id -= 1
+                if next_node is not None:
+                    self.current_node = next_node
+                else:
+                    self.current_node = prev_node
+                    self.current_id -= 1
                 break
             current_node = current_node.next
-
+        
         return removed_node
+    
     
     def remove_element_in_node(self, id_element):
         if id_element in self.ids_innode:
@@ -112,6 +128,11 @@ class Overlappinglist:
                 if node.next != None:
                     node.next.prev = node.prev
                 self.lenght -= 1
+                #self.current_id -= 1
+                if node.next is not None:
+                    self.current_node = node.next
+                else:
+                    self.current_node = node.prev
             
 
     def set_current(self, id):
@@ -212,19 +233,25 @@ class Manager:
 
         self.overlappinglist = Overlappinglist()
 
-        for ind_current, current_ann in enumerate(self.jcoco["annotations"]):
+        sorted_annotation_by_id = sorted(self.jcoco["annotations"], key=lambda x:x['id'])
+
+        for ind_current, current_ann in enumerate(sorted_annotation_by_id):
+            if current_ann['id'] == 12:
+                print()
             if image_id is not None:
                 if current_ann["image_id"] != image_id:
                     continue
 
             overlapping_list = []
-            current_ann['bbox']
-            for next_ann in self.jcoco["annotations"][ind_current+1:]:
-                if image_id is not None:
-                    if next_ann["image_id"] != image_id:
-                        continue
-                if self._are_bbs_overlapping(current_ann['bbox'], next_ann['bbox'], th=OVERLAPPING_TH):
-                    overlapping_list.append(next_ann)
+            for next_ann in sorted_annotation_by_id[ind_current+1:]:
+            #for next_ann in self.jcoco["annotations"]:
+                if current_ann['id'] != next_ann['id']:
+                    if image_id is not None:
+                        if next_ann["image_id"] != image_id:
+                            continue
+                    if self._are_bbs_overlapping(current_ann['bbox'], next_ann['bbox'], th=OVERLAPPING_TH):
+                        overlapping_list.append(next_ann)
+                        sorted_annotation_by_id.remove(next_ann)
 
             if len(overlapping_list) > 0:
                 overlapping_list.append(current_ann)
@@ -268,8 +295,8 @@ class Manager:
 
     def reload_json(self):
         self._load_json()
-        #self.init_overappling_list(self.img_id)
-        self.overlappinglist = None
+        self.init_overappling_list(self.img_id)
+        #self.overlappinglist = None
 
     def get_img(self):
         return self.img
@@ -692,12 +719,12 @@ if __name__ == "__main__":
 
 
     start = time.time()
-    deleted_ann = m.delete_annotation(8) # 7 is an alpha
+    deleted_ann = m.delete_annotation(14) # 7 is an alpha
     print(f"Time to delete element: {time.time()-start}")
     print(f"Element in overlapping list: { len(m.overlappinglist)}")
 
     start = time.time()
-    deleted_ann = m.delete_annotation(48) 
+    deleted_ann = m.delete_annotation(16) 
     print(f"Time to delete element: {time.time()-start}")
     print(f"Element in overlapping list: { len(m.overlappinglist)}")
 

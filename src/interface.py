@@ -69,8 +69,6 @@ async def set_current_state_json(event):
     new_file = document.getElementById("upload_json").files
     new_file = new_file.item(0)
     
-    
-
     json_bytes: bytes = await get_bytes_from_file(new_file)
 
     upload_json(current_json_filemane, json_bytes)
@@ -334,12 +332,10 @@ def dispay_focus(event):
 # BB OVERLAPPING VIEW -------------------------------------------------------------------------------------------
 @when("click", "#overlapp_tab_but")
 def view_current_overl(event):
-
     # if m.overlappinglist is None:
     #     js.window.dispatchEvent(js.pyLoading_overlapping) # JS event
     #     m.init_overappling_list(image_id=input_bb_image_id)
     #     js.window.dispatchEvent(js.pyReady_overlapping) # JS event
-
 
     #clear_content()
     display(f"", target="out_category_annot", append=False)
