@@ -56,6 +56,8 @@ var waitForFinalEvent = (function () {
 			var $view = $(self.view);
 			self.map  = {};
 			self.bounds = {};
+//      a dictionary of ol BBs levels
+			self.levels_dict = {};
 //		a flag used to check the target image has loaded
 			self.ready = false;
 			self.resize = false;
@@ -496,6 +498,68 @@ var waitForFinalEvent = (function () {
 			} else {
 				return null;
 			}
-		}
+		},
+
+/*
+ * Create level of bounding boxes
+ */
+		add_BBs: function(id_layer, bb_list, color){
+
+			if (this.levels_dict[id_layer] == undefined){
+
+				var drawnItems = new L.FeatureGroup();
+				this.levels_dict[id_layer] = drawnItems;
+				this.map.addLayer(drawnItems);
+
+				for (let i = 0; i <bb_list.length; i++) {
+					var pol = bb_list[i]; // coordinate spigoli
+					if (!Array.isArray(pol)){
+						pol = Array.from(pol);
+						for (let j = 0; j < pol.length; j++) {
+							pol[j] = Array.from(pol[j]);
+						}
+					}
+
+					var polygon = L.polygon(pol,{
+					color: color,
+					fillColor: color,
+					fillOpacity: 0.1,
+					});
+					var label = new L.marker([926.5, 105], { opacity: 0.01 });
+					label.bindTooltip("ff", {noHide: true, className: "my-label", offset: [0, 0] });
+							
+					drawnItems.addLayer(polygon);
+					drawnItems.addLayer(label);
+				}
+			}
+		},
+
+/*
+ * Remove level of bounding boxes
+ */
+		remove_BBs: function(id_layer){
+
+			if (this.levels_dict[id_layer] !== undefined){
+				var drawnItems = this.levels_dict[id_layer];
+			
+				this.map.removeLayer(drawnItems);
+				this.levels_dict[id_layer] = undefined;
+			}
+		},
+
+
+/*
+ * Create BoundingBoxes on image
+ */
+test_in_imgv: function(arg){	
+	console.log("Siamo dentro ImgView widjet!")
+	console.log(arg)
+	var c = this.getZoom()
+	console.log(c)
+},
+
 	});
 })(jQuery);
+
+
+

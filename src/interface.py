@@ -1,11 +1,15 @@
+import pyscript
 from pyscript import window, document, when, display, config, HTML
 from pyweb import pydom
+import js
 from js import URL, document, window, console
 from pyodide.ffi.wrappers import add_event_listener
 from file_manager import download_json, upload_json
 from PIL import Image
 from manager import Manager
 import os
+import time
+import const
 
 """
 This file manage the interactions between the GUI and the business logic manager
@@ -17,10 +21,37 @@ input_bb_json_name = document.querySelector("#bb_json_name")
 
 input_bb_image_name = input_bb_image_name.value # it's a str
 input_bb_json_name = input_bb_json_name.value # it's a str
-input_bb_image_id = os.path.splitext(os.path.basename(input_bb_image_name))[0]
 
 m = Manager(input_bb_image_name, input_bb_json_name,  font="assets/Anonymous_Pro.ttf")
+
+input_bb_image_id = m.get_img_id()
+
 m.set_all_bt_categories_default() #Set to BT1 all annotation without bt
+
+# dictionary of all bbs
+bbs_alpha = m.get_list_annotations_per_class_byID(8)
+#[{'image_id': 'PHerc_152_157_cr_21', 'category_id': 8, 'bbox': [986.2196655273438, 535.0287475585938, 108.16619873046875, 127.21624755859375], 'score': 0.4420078992843628, 'id': 0, 'tags': {'BaseType': ['bt1']}}, 
+all_bbs = {}
+#all_bbs[8] = [[[100,200],[200,200],[200,100],[100,100]],[[1000,600],[600,600],[600,1000],[1000,1000]]]
+
+def _update_all_bbs(key_id):
+    bbs_list = m.get_list_annotations_per_class_byID(key_id, image_ID=input_bb_image_id)
+    
+    bbs = []
+
+    for elem in bbs_list:
+        json_bb = elem["bbox"]
+        x = json_bb[0]
+        y = -1*(json_bb[1]-m.img_height)
+        w = json_bb[2]
+        h = json_bb[3]
+
+        th_bb = [[y,x],[y,x+w],[y-h,x+w],[y-h,x]]
+
+        bbs.append(th_bb)
+
+    all_bbs[key_id] = bbs
+
 
 @when("click", "#save_json")
 def get_current_state_json(event):
@@ -44,7 +75,7 @@ async def set_current_state_json(event):
 
     upload_json(current_json_filemane, json_bytes)
     m.reload_json() #Set to BT1 all annotation without bt
-    view_full_bb_image(None)
+    view_original_image()
     #click_selector_category(None)
     close_load()
 
@@ -54,13 +85,12 @@ async def get_bytes_from_file(file):
 
 
 
-@when("click", "#load_bb_image_button")
+#@when("click", "#load_bb_image_button")
 def view_full_bb_image(event, zoom=0, x=0.50, y=0):
     """
-    Called when the buttoin load_bb_image_button is clicked
+    Called when a letter is selected in the list of options (or at lunching)
     The image dispalys the full images with bb
     """
-
     all_bb = document.querySelector("#all_cat_in_full_img").checked
 
     if all_bb == False:
@@ -71,14 +101,56 @@ def view_full_bb_image(event, zoom=0, x=0.50, y=0):
     else:
         filter_cat = "all"
 
+    #print("Loading an Image!!", filter_cat)
+
     image = m.get_img_bboxes(filter_cat=filter_cat)
+    view_original_image(img=image, zoom=zoom, x=x, y=y)
+
+
+def view_original_image(img=None, zoom=0, x=0.50, y=0):
+    """
+    The mothod visualize the original big image in the image div
+    """
+
+    if img is None:
+        image = m.get_img()
+    else:
+        image = img
+
     display(image, target="labelled_img", append=False)
     document.querySelector(f"#labelled_img img").setAttribute("id", "full_image")
-    #document.querySelector(f"#labelled_img img").setAttribute("id", "full_image")
 
     window.load_imgViewer(zoom,x,y)
 
 
+def view_level_bb_image(event):
+    """
+    when you click on the chechbox of the character class on the big image, 
+    the system can show on the image all the boundingboxes releated to the character
+    """
+    value = int(event.srcElement.value)
+    checked = event.srcElement.checked
+
+    if checked:
+        _update_all_bbs(value)
+        color = m.get_color_category(value)
+        window.add_bbs_layer(value, all_bbs[value], color)
+    else:
+        window.remove_bbs_layer(value)
+
+
+@when("click", "#load_bb_image_button")
+def view_bb_level(event):
+    is_selected_class = document.querySelector("#test_ch").checked ##check the current bb
+
+    if is_selected_class:
+        print("add bbs")
+        window.add_bbs_layer(8, all_bbs[8], "red")
+    else:
+        print("Remove bbs")
+        window.remove_bbs_layer(8)
+
+    
 @when("click", "#img_focus_box")
 def change_full_bb_view(event):
     current_bb_image_id = document.querySelector("#current_bb_image_id").value
@@ -94,11 +166,15 @@ def change_full_bb_view(event):
     bb_y = bb[1]
     bb_height = bb[3] 
 
-    zoom = 0.5*img_height/bb_height
+    zoom = 0.25*img_height/bb_height
     x = bb_x/img_width
     y = (bb_y/img_height) + bb_height/img_height*0.5
 
-    view_full_bb_image(None, zoom=zoom,x=x,y=y)
+    set_fullimg_zoom_and_position(zoom=zoom,x=x,y=y) # do not reload the widjet!
+
+
+def set_fullimg_zoom_and_position(zoom=1,x=0.5,y=0):
+    window.set_zoom_and_position(zoom,x,y)
 
 
 def set_checkboxes_full_img():
@@ -115,7 +191,7 @@ def set_checkboxes_full_img():
         new_checkbox_input.type = 'checkbox'
         new_checkbox_input.value = id_cat
         new_checkbox_input.id = f'{ind}_cat_in_full_img'
-        new_checkbox_input.setAttribute('py-click', 'view_full_bb_image');
+        new_checkbox_input.setAttribute('py-click', 'view_level_bb_image')
         #new_checkbox_input.checked = True
 
         new_checkbox.appendChild(new_checkbox_input)
@@ -258,6 +334,13 @@ def dispay_focus(event):
 # BB OVERLAPPING VIEW -------------------------------------------------------------------------------------------
 @when("click", "#overlapp_tab_but")
 def view_current_overl(event):
+
+    # if m.overlappinglist is None:
+    #     js.window.dispatchEvent(js.pyLoading_overlapping) # JS event
+    #     m.init_overappling_list(image_id=input_bb_image_id)
+    #     js.window.dispatchEvent(js.pyReady_overlapping) # JS event
+
+
     #clear_content()
     display(f"", target="out_category_annot", append=False)
 
@@ -383,7 +466,6 @@ def delete_annotation_single(event):
         current_bb_image_id = int(current_bb_image_id.split("_")[-1])
 
         delete_annotation(current_bb_image_id)
-        #m._init_overappling_list(image_id=input_bb_image_id)
 
 def delete_annotation_list(event):
     selected_bb_image_id = document.querySelector("#selected_bb_image_id").value
@@ -441,18 +523,18 @@ def save_new_category_list(event):
         new_BT_cat = selector_BT_category.selectedOptions[0].value
 
         list_selected_bb = selected_bb_image_id.split(",")
+
+        list_ids= []
         for current_bb_image_id in list_selected_bb:
             current_bb_image_id = int(current_bb_image_id.split("_")[-1])
-
-            current_cat_id = m.get_category_byID(current_bb_image_id)
-            current_BT_cat = m.get_bt_category(current_bb_image_id)[0]
-
-            if new_cat_id != current_cat_id:
-                save_new_category(current_bb_image_id,new_cat_id)
-                m.save_json()
-            if new_BT_cat != current_BT_cat:
-                save_new_BT_category(current_bb_image_id,new_BT_cat)
-                m.save_json()
+            list_ids.append(current_bb_image_id)
+        
+        m.set_category_byID(list_ids, new_cat_id)
+        m.set_bt_category(list_ids, new_BT_cat)
+        # m.save_json() ## PERCHE?
+        
+        # reload GUI
+        update_views()    
           
 def save_new_category(bb_id, new_cat_id):
             
@@ -477,13 +559,14 @@ def save_new_BT_category(bb_id, new_BT_cat):
 
 # Initialization ------------
 def init():
-    
     set_selector_category()
     set_checkboxes_full_img()
-    view_full_bb_image(None)
+    view_original_image()
     click_selector_category(None)
     close_load()
     add_event_listener(document.getElementById("upload_json"), "change", set_current_state_json)
+
+    
 
 def close_load():
     loading = document.getElementById('loading')

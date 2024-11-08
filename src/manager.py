@@ -3,6 +3,7 @@ from PIL import Image, ImageDraw, ImageFont
 import distinctipy
 import os
 import io
+import const
 
 FONT="./assets/Anonymous_Pro.ttf"
 FONT_SIZE = 30
@@ -24,13 +25,20 @@ class Overlappinglist:
             self.next = None
             self.prev = None
 
-    def __init__(self):
+    def __init__(self, id_elements_innode=True):
         self.head = None
         self.current_node = None
         self.lenght = 0
         self.current_id = None
 
+        self.id_elements_innode = id_elements_innode
+        if id_elements_innode:
+            self.ids_innode = {}
+
     def len(self):
+        return self.lenght
+    
+    def __len__(self):
         return self.lenght
 
     def insertHead(self, data):
@@ -44,6 +52,9 @@ class Overlappinglist:
             self.head.prev = new_node
             self.head = new_node
         self.lenght += 1
+
+        if self.id_elements_innode:
+            self._insert_idelement_innode(data, new_node)
     
     def append(self, data):
         new_node = self.Node(data)
@@ -59,6 +70,13 @@ class Overlappinglist:
             current_node.next = new_node
             new_node.prev = current_node
         self.lenght += 1
+
+        if self.id_elements_innode:
+            self._insert_idelement_innode(data, new_node)
+
+    def _insert_idelement_innode(self, data, node):
+        for element in data:
+            self.ids_innode[element["id"]] = node
 
     def remove_node(self, data):
         if data is None:
@@ -78,6 +96,24 @@ class Overlappinglist:
 
         return removed_node
     
+    def remove_element_in_node(self, id_element):
+        if id_element in self.ids_innode:
+            node = self.ids_innode[id_element]
+            for ind, element in enumerate(node.data):
+                if id_element == element["id"]:
+                    node.data.pop(ind)
+                    del self.ids_innode[id_element]
+            if len(node.data) <= 1:
+                for element in node.data:
+                    del self.ids_innode[element["id"]]
+                # No more overlapping BBs, delete the Node!
+                if node.prev != None:
+                    node.prev.next = node.next
+                if node.next != None:
+                    node.next.prev = node.prev
+                self.lenght -= 1
+            
+
     def set_current(self, id):
         self.current_node = self.head
 
@@ -107,6 +143,10 @@ class Overlappinglist:
         return self.current_node.data
 
 
+class Overlappinglist2:
+    def __init__(self) -> None:
+        pass
+
     
 
 class Manager:
@@ -116,6 +156,7 @@ class Manager:
         self.img = Image.open(img)
         if self.img.mode != "RGB":
             self.img = self.img.convert("RGB")
+        self.img_width, self.img_height = self.img.size
         self.font = ImageFont.truetype(font=font, size=font_size)
         self.width_bb = width_bb
         self.cocojsaon_name = coco_json
@@ -123,9 +164,17 @@ class Manager:
         self.category_encoding = {}
         self.category_decoding = {}
         
-        self._load_json()
-        self._init_overappling_list(image_id=os.path.splitext(self.img_name)[0])
+        self.color_encoding = {}
         
+        self._load_json()
+        self.img_id = None
+        for image in self.jcoco["images"]:
+            if self.img_name == image['file_name']:
+                self.img_id = image['id']
+                break
+        
+        self.overlappinglist = None
+        self.init_overappling_list()
         
     def _load_json(self):
         self.BT_category_list = ["bt1", "bt2", "bt3"]
@@ -134,12 +183,15 @@ class Manager:
             self.jcoco = json.load(f)
 
         is_unknown_cat_present = False
-        for cat in self.jcoco["categories"]:
+        for ind, cat in enumerate(self.jcoco["categories"]):
             self.category_decoding[cat['id']] = cat['name']
             self.category_encoding[cat['name']] = cat['id']
+            color_ind =  ind % len(const.colors)
+            self.color_encoding[cat['id']] = const.colors[color_ind]
 
             if cat['id'] == -1:
                 is_unknown_cat_present = True
+        self.color_encoding[-1] = const.colors[-1]
         
         if not is_unknown_cat_present:
             self.jcoco["categories"].append({"id":ID_UNKNOWN, "name":STR_UNKNOWN_CAT})
@@ -152,8 +204,8 @@ class Manager:
                 cat['id'] = self.next_annotationID
                 self.next_annotationID += 1        
 
-    def _init_overappling_list(self, image_id=None):
-        if hasattr(self, "overlappinglist"):
+    def init_overappling_list(self, image_id=None):
+        if self.overlappinglist is not None:
             current_id = self.overlappinglist.current_id
         else:
             current_id = 0
@@ -179,7 +231,11 @@ class Manager:
                 self.overlappinglist.append(overlapping_list)
 
         self.overlappinglist.set_current(current_id)
-            
+
+        return 1
+
+    def _remove_from_overlapping(self, image_id):
+        pass
 
     def _are_bbs_overlapping(self, bb1, bb2, th=0.1):
         # overlapping =  not (bb1[0]+bb1[2] < bb2[0]
@@ -212,7 +268,14 @@ class Manager:
 
     def reload_json(self):
         self._load_json()
-        self._init_overappling_list(image_id=os.path.splitext(self.img_name)[0])
+        #self.init_overappling_list(self.img_id)
+        self.overlappinglist = None
+
+    def get_img(self):
+        return self.img
+
+    def get_img_id(self):
+        return self.img_id
 
     def get_img_size(self):
         """
@@ -350,12 +413,20 @@ class Manager:
         new_ID_category: int
             ID of new category
         """
-        assert new_ID_category in self.category_decoding, f"{new_ID_category} not a valid category!"
+
+        if type(id_annotation) == int:
+            all_ids = [id_annotation]
+        else:
+            all_ids = id_annotation.copy()
+
+        #assert new_ID_category in self.category_decoding, f"{new_ID_category} not a valid category!"
 
         for ann in self.jcoco["annotations"]:
-            if ann['id'] == id_annotation:
+            if ann['id'] in all_ids:
                 ann['category_id'] = new_ID_category
-                break
+                all_ids.remove(ann['id'])
+                if len(all_ids) == 0:
+                    break
 
 
     def get_category_byID(self, id_annotation):
@@ -404,18 +475,21 @@ class Manager:
         """
 
         if type(id_annotation) == int:
-            id_annotation = [id_annotation]
+            all_ids = [id_annotation]
+        else:
+            all_ids = id_annotation.copy()
         
         deleted_element = []
         for idx, ann in enumerate(self.jcoco["annotations"]):
-            if ann['id'] in id_annotation:
+            if ann['id'] in all_ids:
                 current_deleted_element = self.jcoco["annotations"].pop(idx)
-                deleted_element.append(current_deleted_element)
-                id_annotation.remove(ann['id'])
-                if len(id_annotation) == 0:
-                    break
+                if self.overlappinglist is not None:
+                    self.overlappinglist.remove_element_in_node(ann['id'])
 
-        self._init_overappling_list(image_id=os.path.splitext(self.img_name)[0])
+                deleted_element.append(current_deleted_element)
+                all_ids.remove(ann['id'])
+                if len(all_ids) == 0:
+                    break
 
         return deleted_element
         
@@ -499,15 +573,21 @@ class Manager:
         bt_cat: str
             new BT category. choose between "BT1", "BT2", "BT3"
         """
-        assert bt_cat in self.BT_category_list, f"{bt_cat} not a valid category!"
-
+        #assert bt_cat in self.BT_category_list, f"{bt_cat} not a valid category!"
+        if type(id_annotation) == int:
+            all_ids = [id_annotation]
+        else:
+            all_ids = id_annotation.copy()
+        
         for ann in self.jcoco["annotations"]:
-            if ann['id'] == id_annotation:
+            if ann['id'] in all_ids:
                 if not 'tags' in ann:
                     ann['tags'] = {}
                 ann['tags']['BaseType'] = [bt_cat]
 
-                break
+                all_ids.remove(ann['id'])
+                if len(all_ids) == 0:
+                    break
     
 
     def get_bt_category(self, id_annotation):
@@ -579,26 +659,57 @@ class Manager:
         return bytes_len, json_stream
 
 
+    def get_color_category(self, id_category):
+        assert id_category in self.color_encoding, f"{id_category} not a valid id_category!"
+        return self.color_encoding[id_category]
+
 
 
 
 if __name__ == "__main__":
+    import time
+
     print("Test class for manager of Viewer&Corrector")
 
-    img_test = "data/docs/00001/TM065797_The_Curse_of_Artemisia_Fragment_WDL4310.jpg"
-    jcoco_test = "data/docs/00001/predictions_9.json"
+    img_test = "data/docs/00001/PHerc_152_157_cr_21.jpg"
+    jcoco_test = "data/docs/00001/predictions_0.json"
 
-
+    start = time.time()
     m = Manager(img_test, jcoco_test)
+    print(f"Time to load Manager: {time.time()-start}")
 
-    current_list = m.overlappinglist.current()
+    # current_list = m.overlappinglist.current()
 
-    current_list = m.overlappinglist.next()
+    # current_list = m.overlappinglist.next()
 
-    m.overlappinglist.remove_node(current_list)
+    # m.overlappinglist.remove_node(current_list)
 
-    m._init_overappling_list()
+    start = time.time()
+    m.init_overappling_list()
+    print(f"Time to Reload Overlapping list: {time.time()-start}")
+
+    print(f"Element in overlapping list: { len(m.overlappinglist)}")
+
+
+    start = time.time()
+    deleted_ann = m.delete_annotation(8) # 7 is an alpha
+    print(f"Time to delete element: {time.time()-start}")
+    print(f"Element in overlapping list: { len(m.overlappinglist)}")
+
+    start = time.time()
+    deleted_ann = m.delete_annotation(48) 
+    print(f"Time to delete element: {time.time()-start}")
+    print(f"Element in overlapping list: { len(m.overlappinglist)}")
+
+    start = time.time()
+    deleted_ann = m.delete_annotation(49) 
+    print(f"Time to delete element: {time.time()-start}")
+    print(f"Element in overlapping list: { len(m.overlappinglist)}")
+
+
+    #m.init_overappling_list() # VORREI NON DOVERLO FARE DOPO LE ELIMINAZIONI!!!
     
+
     categories = m.get_categories()
 
     # get annnotation given a category

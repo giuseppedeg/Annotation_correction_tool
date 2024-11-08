@@ -6,11 +6,13 @@ packages = ["Pillow", "distinctipy"]
 "{TO}" = "."
 
 
-"{FROM}/data/docs/00001/TM065797_The_Curse_of_Artemisia_Fragment_WDL4310.jpg" = "{TO}/data/docs/00001/TM065797_The_Curse_of_Artemisia_Fragment_WDL4310.jpg"
-"{FROM}/data/docs/00001/predictions_9.json" = "{TO}/data/docs/00001/predictions_9.json"
+"{FROM}/data/docs/00000/TM065797_The_Curse_of_Artemisia_Fragment_WDL4310.jpg" = "{TO}/data/docs/00000/TM065797_The_Curse_of_Artemisia_Fragment_WDL4310.jpg"
+"{FROM}/data/docs/00000/predictions_9.json" = "{TO}/data/docs/00000/predictions_9.json"
+
 
 "{FROM}/src/manager.py" = "{TO}/"
 "{FROM}/src/file_manager.py" = "{TO}/"
+"{FROM}/src/const.py" = "{TO}/"
 "{FROM}/assets/Anonymous_Pro.ttf" = "{TO}/assets/Anonymous_Pro.ttf"
 
 

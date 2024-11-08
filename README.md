@@ -14,10 +14,13 @@ Next, extract the ZIP archive to a location on your computer.
 ## Run the Application
 
 ### Windows
-If you are using a Windows machine, you can run the application by executing the `run.bat` file.
+If you are using a Windows machine, you can run the application by executing the `run_windows.bat` file.
 
-### Other Operating System
-For other operating systems, open a terminal in the folder containing all the files of the tool and run the following command:
+### MacOS or Linux-based
+If you are using a MacOS or Linux machine, you can run the application by executing the `run_unix.sh` file.
+
+### All Operating System
+If you prefer not tu use bash file, this proicedure works for all operating systems. Open a terminal in the folder containing all the files of the tool and run the following command:
 ```terminal
 python3 -m http.server 5500
 ```
@@ -27,6 +30,8 @@ After running the command, open a browser and navigate to the following page:
 ```
 http://localhost:5500
 ```
+
+**_NOTE_**: 5500 it is just a custom port, if you prefer you can use the port num,ber you prefer.
 
 ## Demo Video
 You can find a video that explains how to run the software and how to use it at the following link:

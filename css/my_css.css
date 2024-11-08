@@ -28,6 +28,15 @@
     margin-right: 15px;
 }
 
+/* Loading Overlapping Zones */
+#loading_overlapping{
+    display: none;
+    top: 180px;
+    z-index: 500;
+    position: fixed;
+    text-align: -webkit-center;
+}
+
 @keyframes spin {
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
