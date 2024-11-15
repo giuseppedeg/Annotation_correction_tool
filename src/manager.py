@@ -300,6 +300,9 @@ class Manager:
 
     def get_img(self):
         return self.img
+    
+    def get_img_path(self):
+        return self.img_path
 
     def get_img_id(self):
         return self.img_id

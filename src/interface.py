@@ -110,13 +110,16 @@ def view_original_image(img=None, zoom=0, x=0.50, y=0):
     The mothod visualize the original big image in the image div
     """
 
-    if img is None:
-        image = m.get_img()
-    else:
-        image = img
+    # if img is None:
+    #     image = m.get_img()
+    # else:
+    #     image = img
 
-    display(image, target="labelled_img", append=False)
-    document.querySelector(f"#labelled_img img").setAttribute("id", "full_image")
+    # display(image, target="labelled_img", append=False)
+    # document.querySelector(f"#labelled_img img").setAttribute("id", "full_image")
+
+    image_path = m.get_img_path()
+    document.querySelector(f"#full_image").setAttribute("src", image_path)
 
     window.load_imgViewer(zoom,x,y)
 
@@ -571,7 +574,8 @@ def close_load():
     print("Loaded!")
 
 def open_load():
-    display("", target="labelled_img", append=False)
+    # display("", target="labelled_img", append=False)
+    #document.querySelector(f"#full_image").setAttribute("src", "")
     loading = document.getElementById('loading')
     #loading.open()
     loading.style.display = "flex"
