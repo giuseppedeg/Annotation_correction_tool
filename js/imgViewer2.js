@@ -503,7 +503,20 @@ var waitForFinalEvent = (function () {
 /*
  * Create level of bounding boxes
  */
-		add_BBs: function(id_layer, bb_list, color){
+		add_BBs: function(id_layer, bb_list, label, color){
+
+			// I can fake an icon to disply the alt description
+			// var curr_icon = L.icon({
+			// 	//iconUrl: 'css/images/marker-icon-8.png',
+			// 	iconUrl: 'css/images/fake-icon.png',
+			// 	iconSize:     [30, 35], // size of the icon
+			// 	shadowSize:   [0, 0], // size of the shadow
+			// 	iconAnchor:   [-1, -1], // point of the icon which will correspond to marker's location
+			// 	shadowAnchor: [0, 0],  // the same for the shadow
+			// 	popupAnchor:  [0, 0] // point from which the popup should open relative to the iconAnchor
+			// });
+
+
 
 			if (this.levels_dict[id_layer] == undefined){
 
@@ -525,11 +538,30 @@ var waitForFinalEvent = (function () {
 					fillColor: color,
 					fillOpacity: 0.1,
 					});
-					var label = new L.marker([926.5, 105], { opacity: 0.01 });
-					label.bindTooltip("ff", {noHide: true, className: "my-label", offset: [0, 0] });
-							
+					
+					// POSITION CENTER
+					// let label_x = (pol[0][0]+pol[2][0])/2;
+					// let label_y = (pol[0][1]+pol[1][1])/2;	
+					
+					// POSITION T-L CORNER 
+					let label_x = pol[0][0];
+					let label_y = pol[0][1];	
+
+					var curr_icon = L.divIcon({
+						className: 'marker-div',
+						html: label,
+						iconSize:     [30, 35], // size of the icon
+						shadowSize:   [0, 0], // size of the shadow
+						iconAnchor:   [-1, -1], // point of the icon which will correspond to marker's location
+						shadowAnchor: [0, 0],  // the same for the shadow
+						popupAnchor:  [0, 0] // point from which the popup should open relative to the iconAnchor
+					});
+					
+					var marker = new L.marker([label_x, label_y], {icon: curr_icon, keyboard: 'false', title: label, alt:label, opacity: 0.8});
+					//marker.bindTooltip(label, {direction: 'center', permanent: true, className: "bb-label", offset: [0, -27] });
+
 					drawnItems.addLayer(polygon);
-					drawnItems.addLayer(label);
+					drawnItems.addLayer(marker);
 				}
 			}
 		},

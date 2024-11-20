@@ -131,11 +131,12 @@ def view_level_bb_image(event):
     """
     value = int(event.srcElement.value)
     checked = event.srcElement.checked
+    label = m.decode_category(value)
 
     if checked:
         _update_all_bbs(value)
         color = m.get_color_category(value)
-        window.add_bbs_layer(value, all_bbs[value], color)
+        window.add_bbs_layer(value, all_bbs[value], label, color)
     else:
         window.remove_bbs_layer(value)
 

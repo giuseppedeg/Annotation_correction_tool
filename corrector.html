@@ -5,7 +5,7 @@
   <title>ViewerAndCorrector</title>
   <meta name="keywords" content="" />
   <meta name="description" content="" />
-  <meta name="viewport" content="width=device-width">        
+  <meta name="viewport" content="width=device-width">
   <link rel="stylesheet" href="css/templatemo_main.css">
   <link rel="stylesheet" href="css/my_css.css">
 
@@ -16,7 +16,7 @@
   <link rel="stylesheet" href="css/leaflet.css">
   <link rel="stylesheet" href="css/jquery/jquery-ui.css" media="screen"> <!-- http://code.jquery.com/ui/1.12.1/themes/smoothness/jquery-ui.css -->
 
-   
+
   <!-- on load -->
   <script type="module">
 
@@ -56,7 +56,7 @@
 
     document.querySelector("#bb_image_name").value = img_name
     document.querySelector("#bb_json_name").value = json_name
-    
+
     const loading = document.getElementById('loading');
     // addEventListener('py:ready', () => loading_close(loading));
     // addEventListener('py:done', () => loading_close(loading)); # BETTER
@@ -81,7 +81,7 @@
   <!-- Name Image -->
   <input type="hidden" id="bb_image_name"  value="" />
   <input type="hidden" id="bb_json_name"  value="" />
-  
+
 
   <!-- Last CLick Image Coordinates -->
   <input type="hidden" id="click_x" value="0" />
@@ -91,7 +91,7 @@
   <!-- Selected Annotations -->
   <input type="hidden" id="current_bb_image_id"  value="None" />
   <input type="hidden" id="selected_bb_image_id"  value="None" />
-  
+
   <!--  END -- HIDDEN ELEMENT TO COMUNICATE WITH PYSCRIPT -->
 
 
@@ -103,8 +103,8 @@
         <span class="icon-bar"></span>
         <span class="icon-bar"></span>
         <span class="icon-bar"></span>
-      </button> 
-    </div>   
+      </button>
+    </div>
   </div>
 
 <!-- MAIN  ----------------------------------------------------------------------------------------------------------------->
@@ -115,16 +115,19 @@
         <div class="content-box">
           <div id="top-option-section">
             <p>Download the current annotation JSON: <a href="#" class="btn btn-success" id="save_json">Download</a></p>
-            <p><label for="upload_json">Upload annotation JSON file:</label> 
+            <p><label for="upload_json">Upload annotation JSON file:</label>
               <input type="file" id="upload_json"></p>
 
           </div>
         </div>
-        
+
         <!-- Big Image Viewer ------------------------------- -->
         <div class="content-box">
           <div id="top-full-img">
-            <button id="load_bb_image_button">Reload Image</button>
+            <!-- <button id="load_bb_image_button">Reload Image</button> -->
+            <div>
+              <label class="checkbox-inline"><input type="checkbox" checked="false" id="labels_in_full_img" value="label" onclick="display_labels()"><p>Show Labels</p></label>
+            </div>
 
             <div class="row checkboxes_row_full_img">
               <div class="col-md-12 margin-bottom-15" id="checkboxes_full_img">
@@ -132,25 +135,25 @@
               </div>
             </div>
           </div>
-          
+
           <div id="labelled_img">
             <img id="full_image" src=""></img>
 
           </div>
-          
+
         </div>
         <!-- https://phuoc.ng/collection/html-dom/create-resizable-split-views/ -->
 
 
         <!-- Annotation View Panels --------------------------- -->
-        
+
         <!-- Annotations tab --------------------------- -->
         <div class="tab">
           <button class="tablinks active" id="focus_tab_but" onclick="openTab(event, 'focus_tab')">Focus View</button>
           <button class="tablinks" id="annotation_tab_but" onclick="openTab(event, 'annotation_tab')">Annotation View</button>
           <button class="tablinks" id="overlapp_tab_but" onclick="openTab(event, 'overlapping_tab')">Overlapping View</button>
         </div>
-      
+
         <div class="content-box bb-viewer-box-main">
           <!-- Focus tab --------------------------- -->
           <div id="focus_tab" class="tabcontent" style="display: inline-block;">
@@ -191,12 +194,12 @@
                 <div id="out_category_top_info">
                   <div id="out_category_head_overl"></div>
                   <div id="out_category_head_overl_2"></div>
-                </div>                
+                </div>
               </div>
               <div class="out_category" id="out_category_overl" class="panel-body"></div>
             </div>
           </div>
-          
+
           <div class="resizer" id="dragMe"></div>
 
           <div id="bb-viewer-focus-box">
@@ -208,20 +211,20 @@
             </div>
           </div>
 
-        </div>  
+        </div>
       </div>
     </div>
   </div>
 
-  
-  
+
+
 
   <footer class="templatemo-footer">
     <div class="templatemo-copyright">
       <p>Copyright &copy; 2024 Giuseppe De Gregorio</p>
     </div>
   </footer>
-     
+
 
   <!-- Modal -->
   <div class="modal fade" id="confirmModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
@@ -251,9 +254,11 @@
 
   <!-- CATEGORY SELECTOR - chack box controller  -->
   <script type="text/javascript" src="js/category_selector.js"></script>
-  <script type="text/javascript"> 
-    // force all cbox to false  
+  <script type="text/javascript">
+    // force all cbox to false
     document.getElementById("all_cat_in_full_img").checked = false;
+    document.getElementById("labels_in_full_img").checked = false;
+
   </script>
 
   <!-- IMAGE VIEWER -->
@@ -265,10 +270,10 @@
 
 
   <script type="py" src="./src/interface.py" config="./pyscript.toml"></script>
-  
 
-  
-  <script type="text/javascript"> 
+
+
+  <script type="text/javascript">
     function openTab(evt, tabName) {
       var i, tabcontent, tablinks;
       tabcontent = document.getElementsByClassName("tabcontent");

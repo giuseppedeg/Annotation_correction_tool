@@ -256,6 +256,25 @@
     max-height: 700px;
 }
 
+.bb-label{
+    opacity: 0.70 !important;
+    border-color: darkgray !important;
+    font-size: 10px;
+    left: 0px;
+    display: none;
+}
+
+.marker-div{
+    background: rgb(250, 250, 250) !important;
+}
+
+.leaflet-marker-icon{
+    background: rgb(250, 250, 250) !important;
+    border: rgb(30, 30, 30) solid 1px;
+    text-align: center;
+    font-size: 18px;
+    display: none !important;
+}
 
 
 .bb-viewer-box-main{

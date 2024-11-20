@@ -25,9 +25,9 @@ var set_zoom_and_position = function(zoom, x, y){
 	$("#full_image").imgViewer2('panTo', x, y);
 };
 
-var add_bbs_layer = function(bb_id, bb_list, color){
+var add_bbs_layer = function(bb_id, bb_list, label, color){
 	bb_list = Array.from(bb_list);
-	$("#full_image").imgViewer2('add_BBs', bb_id, bb_list, color);
+	$("#full_image").imgViewer2('add_BBs', bb_id, bb_list, label, color);
 }
 
 var remove_bbs_layer = function(bb_id){
