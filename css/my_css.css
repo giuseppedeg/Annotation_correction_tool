@@ -325,6 +325,91 @@
 
 
 
+/* Functions bar ----------------------------- */
+
+#functions-bar {
+    width: 100%;
+    background-color: lightgray;
+    padding-left: 5px;
+    padding-top: 2px;
+}
+
+.icon-function {
+    display: inline-block;
+    height: 30px;
+    width: 30px;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    border-radius: 5px;
+}
+
+.icon-function-new {
+    background: url('../assets/icons/new_bb.png');
+    background-repeat: no-repeat;
+    background-size: 25px;
+    background-position: center;
+}
+
+.tooltip-funcs {
+    position: relative;
+    text-align: center; 
+    transition: all 0.3s ease;
+    width: 30px;
+  }
+  
+.tooltip-funcs .tooltip-funcs-text {
+    visibility: hidden;
+    width: 120px;
+    background-color: #4b4b4b;
+    color: #fff;
+    text-align: center;
+    border-radius: 6px;
+    padding: 5px 15px;
+    white-space: nowrap;
+    
+    /* Position the tooltip */
+    position: absolute;
+    z-index: 1;
+    top: 100%;
+    left: 50%;
+    margin-left: -60px;
+  }
+  
+.tooltip-funcs:hover .tooltip-funcs-text {
+    visibility: visible;
+  }
+
+#functions-bar a, #functions-bar a:active, #functions-bar a:focus {
+    outline: none;
+ }
+
+
+
+/* --- Extra info Table  --- */
+
+.styled-table {
+    border-collapse: collapse;
+    margin: 0px 0;
+    width: 100%;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.15)
+}
+
+.styled-table th,
+.styled-table td {
+    padding: 2px 12px;
+}
+
+.styled-table tbody tr {
+    border-bottom: 1px solid #dddddd;
+}
+
+.styled-table tbody tr:nth-of-type(even) {
+    background-color: #f3f3f3;
+}
+
+.styled-table tbody tr:last-of-type {
+    border-bottom: 2px solid #009879;
+}
 
 
 

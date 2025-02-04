@@ -37,6 +37,7 @@ var function_letter_clickAndHide = function(){
           $('#current_bb_image_id').val("None");
           $('#current_selected').html("");
 
+
         }
         else{
           if (isCtrl){

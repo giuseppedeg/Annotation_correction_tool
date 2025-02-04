@@ -61,6 +61,7 @@
 
               <tbody id="doc_table">
                 <!-- AUTO DEFINITION: see file data/docs.json -->
+                
 
 
               </tbody>
@@ -198,7 +199,7 @@
 
                   td = document.createElement("td");
                     a = document.createElement("a");
-                    a.setAttribute('href', "corrector.html?json_file=data/docs/"+data["documents"][i]["image_id"]+"/"+data["documents"][i]["cocojson_name"]+"&img_file=data/docs/"+data["documents"][i]["image_id"]+"/"+data["documents"][i]["image_name"]);
+                    a.setAttribute('href', "corrector.html?toml=toml/"+data["documents"][i]["image_id"]+".toml&json_file=data/docs/"+data["documents"][i]["image_id"]+"/"+data["documents"][i]["cocojson_name"]+"&img_file=data/docs/"+data["documents"][i]["image_id"]+"/"+data["documents"][i]["image_name"]);
                     a.classList.add("btn");
                     a.classList.add("btn-success");
                     a.innerHTML = "Load";

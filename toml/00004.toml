@@ -11,5 +11,6 @@ packages = ["Pillow", "distinctipy"]
 "{FROM}/assets/Anonymous_Pro.ttf" = "{TO}/assets/Anonymous_Pro.ttf"
 
 # END COMMON PART
-
+"{FROM}/data/docs/00004/TM065674_P_13270_R_001.jpg" = "{TO}/data/docs/00004/TM065674_P_13270_R_001.jpg"
+"{FROM}/data/docs/00004/predictions.json" = "{TO}/data/docs/00004/predictions.json"
 

@@ -11,11 +11,12 @@ WIDTH_BB = 3
 
 DEFAULT_BT = "bt1"
 
-ID_UNKNOWN = -1
+ID_UNKNOWN = 0
 STR_UNKNOWN_CAT = "Unknown"
 
 
-OVERLAPPING_TH = 0.75
+OVERLAPPING_TH = 0.75 # % of overlapping area to ywo bbs to be considered overlapped
+SCORE_TH = 0
 
 class Overlappinglist:
     
@@ -171,7 +172,7 @@ class Overlappinglist2:
     
 
 class Manager:
-    def __init__(self, img, coco_json, font=FONT, font_size=FONT_SIZE, width_bb=WIDTH_BB):
+    def __init__(self, img, coco_json, font=FONT, font_size=FONT_SIZE, width_bb=WIDTH_BB, score_th=SCORE_TH):
         self.img_path = img
         self.img_name = os.path.basename(img)
         self.img = Image.open(img)
@@ -193,25 +194,39 @@ class Manager:
             if self.img_name == image['file_name']:
                 self.img_id = image['id']
                 break
-        
+
         self.overlappinglist = None
+        if 0 < score_th < 1:
+            for annotation in self.jcoco["annotations"]:
+                if 'score' in annotation:
+                    if annotation['score'] < score_th:
+                        self.delete_annotation(annotation['id'])
+        
+        self.last_annotation_id = 0
         self.init_overappling_list()
         
     def _load_json(self):
-        self.BT_category_list = ["bt1", "bt2", "bt3"]
+        self.BT_category_list = const.BT_TYPE_LIST
 
         with open(self.cocojsaon_name, encoding="utf-8") as f:
             self.jcoco = json.load(f)
 
         is_unknown_cat_present = False
         for ind, cat in enumerate(self.jcoco["categories"]):
+            if cat['id'] == -1:
+                cat['id'] = ID_UNKNOWN
+                is_unknown_cat_present = True
+
+            if cat['id'] == ID_UNKNOWN:
+                is_unknown_cat_present = True
+                
             self.category_decoding[cat['id']] = cat['name']
             self.category_encoding[cat['name']] = cat['id']
             color_ind =  ind % len(const.colors)
             self.color_encoding[cat['id']] = const.colors[color_ind]
 
-            if cat['id'] == -1:
-                is_unknown_cat_present = True
+            
+
         self.color_encoding[-1] = const.colors[-1]
         
         if not is_unknown_cat_present:
@@ -235,31 +250,44 @@ class Manager:
 
         sorted_annotation_by_id = sorted(self.jcoco["annotations"], key=lambda x:x['id'])
 
-        for ind_current, current_ann in enumerate(sorted_annotation_by_id):
-            if current_ann['id'] == 12:
-                print()
-            if image_id is not None:
-                if current_ann["image_id"] != image_id:
-                    continue
+        if sorted_annotation_by_id:
 
-            overlapping_list = []
-            for next_ann in sorted_annotation_by_id[ind_current+1:]:
-            #for next_ann in self.jcoco["annotations"]:
-                if current_ann['id'] != next_ann['id']:
-                    if image_id is not None:
-                        if next_ann["image_id"] != image_id:
-                            continue
-                    if self._are_bbs_overlapping(current_ann['bbox'], next_ann['bbox'], th=OVERLAPPING_TH):
-                        overlapping_list.append(next_ann)
-                        sorted_annotation_by_id.remove(next_ann)
+            if int(sorted_annotation_by_id[-1]['id']) > self.last_annotation_id:
+                    self.last_annotation_id = sorted_annotation_by_id[-1]['id']
 
-            if len(overlapping_list) > 0:
-                overlapping_list.append(current_ann)
-                self.overlappinglist.append(overlapping_list)
+            for ind_current, current_ann in enumerate(sorted_annotation_by_id):
+                if image_id is not None:
+                    if current_ann["image_id"] != image_id:
+                        continue
+                
+                
+
+                overlapping_list = []
+                for next_ann in sorted_annotation_by_id[ind_current+1:]:
+                #for next_ann in self.jcoco["annotations"]:
+                    if current_ann['id'] != next_ann['id']:
+                        if image_id is not None:
+                            if next_ann["image_id"] != image_id:
+                                continue
+                        if self._are_bbs_overlapping(current_ann['bbox'], next_ann['bbox'], th=OVERLAPPING_TH):
+                            if ('score' in current_ann and 'score' in next_ann) and (current_ann['category_id'] == next_ann['category_id']):
+                                # Keep the one with big score
+                                if next_ann['score'] > current_ann['score']:
+                                    to_delete = current_ann
+                                    current_ann = next_ann
+                                else:
+                                    to_delete = next_ann
+                                self.delete_annotation(to_delete['id'])
+                            else:
+                                overlapping_list.append(next_ann)
+                            sorted_annotation_by_id.remove(next_ann)
+
+                if len(overlapping_list) > 0:
+                    overlapping_list.append(current_ann)
+                    self.overlappinglist.append(overlapping_list)
 
         self.overlappinglist.set_current(current_id)
 
-        return 1
 
     def _remove_from_overlapping(self, image_id):
         pass
@@ -281,7 +309,6 @@ class Manager:
                 return True
         return False
         
-
     def _get_next_annotationID(self):
         next_annotationID = 0
         for cat in self.jcoco["annotations"]:
@@ -385,13 +412,16 @@ class Manager:
             maximum annotation score to add it to the return list
         """
 
-        assert ID_category in self.category_decoding, f"{ID_category} not a valid ID category!"
+        #assert ID_category in self.category_decoding, f"{ID_category} not a valid ID category!"
 
         all_annotations = []
         for ann in self.jcoco["annotations"]:
             if not(image_ID is not None and ann['image_id'] != image_ID):
                 if ann['category_id'] == ID_category:
-                    if min_score <= ann['score']<= max_score:
+                    if 'score' in ann:
+                        if min_score <= ann['score']<= max_score:
+                            all_annotations.append(ann)
+                    else:
                         all_annotations.append(ann)
 
         return all_annotations
@@ -417,7 +447,10 @@ class Manager:
             if not(image_ID is not None and ann['image_id'] != image_ID):
                 if (int(ann['bbox'][0]) <= x <= int(ann['bbox'][0])+int(ann['bbox'][2])) and \
                     (int(ann['bbox'][1]) <= y <= int(ann['bbox'][1])+int(ann['bbox'][3])):
-                    if min_score <= ann['score']<= max_score:
+                    if 'score' in ann:
+                        if min_score <= ann['score']<= max_score:
+                            all_annotations.append(ann)
+                    else:
                         all_annotations.append(ann)
 
         return all_annotations
@@ -426,7 +459,17 @@ class Manager:
     def get_categories(self):
         """ returns a list of all categories
         """
-        return self.jcoco["categories"]
+        categories = []
+        def_cat = None
+        for cat in self.jcoco["categories"]:
+            if cat['id'] != ID_UNKNOWN:
+                categories.append(cat)
+            else:
+                def_cat = cat
+        if def_cat:
+            categories.append(def_cat)
+
+        return categories
     
 
     def decode_category(self, category_code):
@@ -495,6 +538,28 @@ class Manager:
                 break
 
     
+    def add_new_annotation(self, bb, category=-1):
+        """Add a new annotation to the json
+
+        Parameters
+        ----------
+              bb: bounding box of the new annotation in format [x,y,w,h]
+        category: category ID of the new annotation. (default -1 is 'UNKNOWN' annotation)
+        """
+
+        self.last_annotation_id += 1
+
+        self.jcoco["annotations"].append(
+        {
+            'image_id': self.img_id, 
+            'category_id': category, 
+            'bbox': bb, 
+            'score': 1, 
+            'id': self.last_annotation_id, 
+            'tags': {'BaseType': [DEFAULT_BT]}
+        })
+
+
     def delete_annotation(self, id_annotation):
         """Deletes the annotation with id_annotation from all annotations
 
@@ -655,6 +720,34 @@ class Manager:
     def get_bt_categoty_list(self):
         return self.BT_category_list
 
+    def get_all_extra_info(self, id_annotation):
+        """
+        The method gets all the extra info for an annotation defined in the JSONs
+        """
+        common_info = ["bbox", "category_id", "image_id"] # these info is not considered as extra info
+        common_info = [] # these info is not considered as extra info
+        
+        return_dic = {}
+        for ann in self.jcoco["annotations"]:
+            if ann['id'] == id_annotation:
+                for pr_name, pr_value in ann.items():
+                    if pr_name not in common_info:
+                        return_dic[pr_name] = pr_value
+                return return_dic
+        return None
+    
+    def get_zone_name(self, zone_id):
+        """
+        if in the json the 'zones' are defined, it returns the zone name given the zone id.
+        if no zone is fonded with the given id, the methods returns None
+        """
+        if "zones" in self.jcoco:
+            for zone in self.jcoco["zones"]:
+                if zone["id"] == zone_id:
+                    return zone["name"]
+        
+        return None
+        
 
     def save_json(self, out_path=None):
         """Save all on a coco_json file
@@ -690,7 +783,8 @@ class Manager:
 
 
     def get_color_category(self, id_category):
-        assert id_category in self.color_encoding, f"{id_category} not a valid id_category!"
+        if id_category not in self.color_encoding:
+            return "#7A7A7A"
         return self.color_encoding[id_category]
 
 
@@ -701,12 +795,16 @@ if __name__ == "__main__":
 
     print("Test class for manager of Viewer&Corrector")
 
-    img_test = "data/docs/00001/PHerc_152_157_cr_21.jpg"
-    jcoco_test = "data/docs/00001/predictions_0.json"
+    img_test = "data/docs/00000/TM1011_P.Cair.Zen.3.59368.jpg"
+    jcoco_test = "data/docs/00000/TM1011_P.Cair.Zen.3.59368.json"
 
     start = time.time()
-    m = Manager(img_test, jcoco_test)
+    m = Manager(img_test, jcoco_test, score_th=0)
     print(f"Time to load Manager: {time.time()-start}")
+
+    # start = time.time()
+    # m = Manager(img_test, jcoco_test, score_th=SCORE_TH)
+    # print(f"Time to load Manager with score filter: {time.time()-start}")
 
     # current_list = m.overlappinglist.current()
 
@@ -714,11 +812,15 @@ if __name__ == "__main__":
 
     # m.overlappinglist.remove_node(current_list)
 
-    start = time.time()
-    m.init_overappling_list()
-    print(f"Time to Reload Overlapping list: {time.time()-start}")
+    # start = time.time()
+    # m.init_overappling_list()
+    # print(f"Time to Reload Overlapping list: {time.time()-start}")
 
     print(f"Element in overlapping list: { len(m.overlappinglist)}")
+
+
+    
+    infos = m.get_all_extra_info(123008)
 
 
     start = time.time()

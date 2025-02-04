@@ -31,7 +31,8 @@ var waitForFinalEvent = (function () {
 			zoomable: true,
 			dragable: true,
 			onClick: $.noop,
-			onReady: $.noop
+			onReady: $.noop,
+			new_bb_callback: $.noop 
 		},
 		
 		_create: function() {
@@ -165,6 +166,54 @@ var waitForFinalEvent = (function () {
 						}, 300, $img[0].id);
 					});
 					self.options.onReady.call(self);
+
+
+//			Define the drowable option (to insert new BB)					
+			// Initialise the FeatureGroup to store editable layers
+			var editableLayers = new L.FeatureGroup();
+			self.map.addLayer(editableLayers);
+
+			// Option for edit tab / ADD bounding box)
+			var options_edit = {
+				position: 'topleft',
+				draw: {
+					// disable toolbar item by setting it to false
+					polyline: false,
+					circle: false,
+					polygon: false,
+					marker: false,
+
+					rectangle: true,
+					rectangle:{
+						shapeOptions: {
+							color: '#9c0000',
+							weight: 1,
+							clickable: false
+						}
+					},
+				},
+				// edit: {
+				//   featureGroup: editableLayers, //REQUIRED!!
+				//   remove: true
+				// }
+			};
+
+
+
+			// Initialise the draw control and pass it the FeatureGroup of editable layers
+			self.map.addControl(new L.Control.Draw(options_edit));
+			self.map.addLayer(editableLayers);
+
+			self.map.on('draw:created', function(e) {
+				layer = e.layer; // it is the drowed object  
+			
+				//editableLayers.addLayer(layer); // add element to image
+
+				let rectangle = layer.getLatLngs()
+				self.options.new_bb_callback.call(self, rectangle);
+			});
+
+
 			}).each(function() {
 				if (this.complete) { $(this).trigger("load"); }
 			});

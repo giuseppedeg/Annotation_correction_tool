@@ -50,3 +50,5 @@ colors = [
     "#C0C0C0",
     "#B0C4DE"
 ]
+
+BT_TYPE_LIST = ["bt1", "bt2", "bt3", "bt4"]

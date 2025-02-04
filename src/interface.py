@@ -6,7 +6,7 @@ from js import URL, document, window, console
 from pyodide.ffi.wrappers import add_event_listener
 from file_manager import download_json, upload_json
 from PIL import Image
-from manager import Manager
+from manager import Manager, ID_UNKNOWN, STR_UNKNOWN_CAT
 import os
 import time
 import const
@@ -213,6 +213,10 @@ def view_current_focus(event):
 
 @when("click", "#click_full_img")
 def click_on_big_img(event):
+    if document.add_new:
+        document.add_new = False
+        document.getElementById('new-bb-func-btn').style.backgroundColor = "transparent"
+
     document.querySelector("#focus_tab_but").click()
 
     click_x = int(document.querySelector("#click_x").value)
@@ -237,11 +241,11 @@ def set_selector_category():
     for cat in all_cat:
         id_cat = cat['id']
         text_cat = cat['name']
-
         new_option = pydom.create("option")
         new_option.value = id_cat
         new_option.text = text_cat
         pydom['#selector_category'][0].append(new_option)
+
 
 @when("click", '#selector_category')
 def click_selector_category(event):
@@ -257,7 +261,7 @@ def click_selector_category(event):
     view_bboxes(all_bbs, "annot")
 
 @when("click", ".display-focus-class-btn")
-def dispay_focus(event):
+def display_focus(event):
     """
     dispalys the focus image of an annotation.
     """
@@ -291,7 +295,7 @@ def dispay_focus(event):
         
         display(HTML(new_letter_div_str), target="focus_correction_box", append=False)
 
-        # set annotatiion catefory
+        # set annotatiion category
         all_cat = m.get_categories()
         #selector_category = document.querySelector("#selector_category")
         #cat_id = int(selector_category.selectedOptions[0].value)
@@ -330,7 +334,32 @@ def dispay_focus(event):
 
         bb_img = m.get_large_bb_image(current_bb_image_id)
 
-        display(bb_img, target=f"img_focus_box", append=False)       
+        display(bb_img, target=f"img_focus_box", append=False)     
+
+
+        # get extra info from json
+        extra_info = m.get_all_extra_info(current_bb_image_id)
+
+        new_extrainfo_div_str = f"<table class='styled-table'>  <tbody>"
+        
+        for pr_name, pr_value in extra_info.items():
+            if type(pr_value) is dict:
+                for pr_in_name, pr_in_value in pr_value.items():
+                    new_extrainfo_div_str += f"<tr> <td>{pr_name}:{pr_in_name}</td> <td>{pr_in_value}</td> </tr>"
+            else:
+                if pr_name == "zone_id":
+                    zone_name = m.get_zone_name(pr_value)
+                    if zone_name is None:
+                        zone_name = pr_value
+                    new_extrainfo_div_str += f"<tr> <td>{pr_name}</td> <td>{zone_name}</td> </tr>"
+                else:
+                    new_extrainfo_div_str += f"<tr> <td>{pr_name}</td> <td>{pr_value}</td> </tr>"
+         
+        new_extrainfo_div_str += f"</tbody>  </table>"
+
+        display(HTML(new_extrainfo_div_str), target="extra_info_bb", append=False)
+
+
 
 
 # BB OVERLAPPING VIEW -------------------------------------------------------------------------------------------
@@ -368,7 +397,7 @@ def view_next_overl(event):
 # utils -------------------------------------------------------------------------------------------------------
 def view_bboxes(annotations, target):
     """
-    Visualizes the list of boundingbozes in the target caontainer
+    Visualizes the list of boundingboxes in the target caontainer
 
     params:
         - annotations: list of annotations
@@ -393,7 +422,7 @@ def view_bboxes(annotations, target):
         pydom[f'#out_category_{target}'][0].append(new_letter_div)
 
         new_letter_div_str = f" \
-            <a id='a_img_{bb_info['id']}' class='show_hide' py-click='dispay_focus'> </a>\
+            <a id='a_img_{bb_info['id']}' class='show_hide' py-click='display_focus'> </a>\
             <div class='correction_letter'>\
                 <select class='annot_selector_category' id='cat_selector_{bb_info['id']}'> </select>\
                 <div class='btns-bb'>\
@@ -407,7 +436,8 @@ def view_bboxes(annotations, target):
         display(bb_img, target=f"a_img_{bb_info['id']}", append=False)
         if target in ["focus","overl"]:
             display(f"{m.decode_category(bb_info['category_id'])}", target=f"a_img_{bb_info['id']}", append=True)
-        display(f"Score:{bb_info['score']:.2f}", target=f"a_img_{bb_info['id']}", append=True)
+        if 'score' in bb_info:
+            display(f"Score:{bb_info['score']:.2f}", target=f"a_img_{bb_info['id']}", append=True)
 
         for cat in all_cat:
             curr_id_cat = cat['id']
@@ -437,6 +467,7 @@ def clear_focus_bb():
     # Clear Focus BB
     display("", target="annot_message", append=False)
     display("", target="current_selected", append=False)       
+    display("", target="extra_info_bb", append=False)       
     display("", target="focus_correction_box", append=False)
     display("", target="img_focus_box", append=False)
   
@@ -456,6 +487,16 @@ def update_views():
         view_current_overl(None)
 
 # SAVE AND MODIFY CATEGORIES ---------------------------------------------------------------------------------
+@when("click", "#add-new-bb-div")
+def add_new_annotation(event):
+    bb = event.target.getAttribute("bb").split(",")
+    category_id = int(event.target.getAttribute("category_id"))
+  
+    bb = [float(x) for x in bb]
+    bb[1] = m.img_height-bb[1]-bb[3]
+
+    m.add_new_annotation(bb, category=category_id)
+
 def delete_annotation_single(event):
     current_bb_image_id = document.querySelector("#current_bb_image_id").value
 
@@ -493,6 +534,8 @@ def save_new_category_single(event):
     current_bb_image_id = document.querySelector("#current_bb_image_id").value
     display(f"", target="annot_message", append=False)
     display(f"", target="current_selected", append=False)
+    display("", target="extra_info_bb", append=False)       
+
 
     if current_bb_image_id == "None":
         display("Error in changing annotation!", target="annot_message", append=True)
