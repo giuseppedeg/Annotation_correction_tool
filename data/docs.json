@@ -3,11 +3,6 @@
         {
             "image_id": "00000",
             "image_name": "TM065797_The_Curse_of_Artemisia_Fragment_WDL4310.jpg",
-            "cocojson_name": "predictions_9.json"
-        },
-        {
-            "image_id": "00004",
-            "image_name": "TM065674_P_13270_R_001.jpg",
             "cocojson_name": "predictions.json"
         }
     ]
