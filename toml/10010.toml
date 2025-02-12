@@ -1,0 +1,16 @@
+name = "Firsr PyScript App"
+description = "An example of how to build pyscript app."
+packages = ["Pillow", "distinctipy"]
+[files]
+"{FROM}" = "http://localhost:5500"
+"{TO}" = "."
+
+"{FROM}/src/manager.py" = "{TO}/"
+"{FROM}/src/file_manager.py" = "{TO}/"
+"{FROM}/src/const.py" = "{TO}/"
+"{FROM}/assets/Anonymous_Pro.ttf" = "{TO}/assets/Anonymous_Pro.ttf"
+
+# END COMMON PART
+"{FROM}/data/docs/10010/eng.jpg" = "{TO}/data/docs/10010/eng.jpg"
+"{FROM}/data/docs/10010/predictions.json" = "{TO}/data/docs/10010/predictions.json"
+

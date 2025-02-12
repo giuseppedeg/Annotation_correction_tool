@@ -4,6 +4,86 @@
             "image_id": "00000",
             "image_name": "TM065797_The_Curse_of_Artemisia_Fragment_WDL4310.jpg",
             "cocojson_name": "predictions.json"
+        },
+        {
+            "image_id": "00001",
+            "image_name": "TM062931_TimotheusPersae_crop1.jpg",
+            "cocojson_name": "predictions.json"
+        },
+        {
+            "image_id": "00002",
+            "image_name": "TM062931_TimotheusPersae_crop2.jpg",
+            "cocojson_name": "predictions.json"
+        },
+        {
+            "image_id": "00003",
+            "image_name": "TM062931_TimotheusPersae_crop3.jpg",
+            "cocojson_name": "predictions.json"
+        },
+        {
+            "image_id": "00005",
+            "image_name": "TM065795_Derveni_CavalloMaehler_DerveniPage27.jpg",
+            "cocojson_name": "predictions.json"
+        },
+        {
+            "image_id": "00006",
+            "image_name": "TM065795_Derveni_UNESCO_greece_derveni_papyrus_amth2.jpg",
+            "cocojson_name": "predictions.json"
+        },
+        {
+            "image_id": "00009",
+            "image_name": "TM065795_Derveni_UNESCO_papyrus_amth_5.jpg",
+            "cocojson_name": "predictions.json"
+        },
+        {
+            "image_id": "10000",
+            "image_name": "2999px-Lyon-TableClaudienne_bronzo.jpg",
+            "cocojson_name": "predictions.json"
+        },
+        {
+            "image_id": "10001",
+            "image_name": "1327936773345_epigrafe.jpg",
+            "cocojson_name": "predictions.json"
+        },
+        {
+            "image_id": "10002",
+            "image_name": "epi_apollonia.jpg",
+            "cocojson_name": "predictions.json"
+        },
+        {
+            "image_id": "10003",
+            "image_name": "P.Oxy_bizantino.jpg",
+            "cocojson_name": "predictions.json"
+        },
+        {
+            "image_id": "10004",
+            "image_name": "TM3563_P.Tor.Choach.12.01.jpg",
+            "cocojson_name": "predictions.json"
+        },
+        {
+            "image_id": "10005",
+            "image_name": "latino_graff.jpg",
+            "cocojson_name": "predictions.json"
+        },
+        {
+            "image_id": "10006",
+            "image_name": "latino_murale.jpg",
+            "cocojson_name": "predictions.json"
+        },
+        {
+            "image_id": "10007",
+            "image_name": "Pantheon.jpg",
+            "cocojson_name": "predictions.json"
+        },
+        {
+            "image_id": "10008",
+            "image_name": "sesterzio_nerone.jpg",
+            "cocojson_name": "predictions.json"
+        },
+        {
+            "image_id": "10009",
+            "image_name": "eng.jpg",
+            "cocojson_name": "predictions.json"
         }
     ]
 }
