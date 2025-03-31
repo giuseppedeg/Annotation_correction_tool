@@ -52,9 +52,10 @@ var remove_bbs_layer = function(bb_id){
 	$("#full_image").imgViewer2('remove_BBs', bb_id);
 }
 
-var test_imgViewer_interaction = function(arg){
-	console.log("QUI");
+var update_bbs_layer = function(bb_id){
+}
 
+var test_imgViewer_interaction = function(arg){
 	//Richiamare metodi del widjet imgViewer2
 	$("#full_image").imgViewer2('test_in_imgv', "parametri");
 	$("#full_image").imgViewer2('setZoom', "3");

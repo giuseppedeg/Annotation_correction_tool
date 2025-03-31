@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<head>
+  <meta charset="utf-8">
+  <!--[if IE]><meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1"><![endif]-->
+  <title>ViewerAndCorrector</title>
+  <meta name="keywords" content="" />
+  <meta name="description" content="" />
+  <meta name="viewport" content="width=device-width">
+  <link rel="stylesheet" href="css/templatemo_main.css">
+  <link rel="stylesheet" href="css/my_css.css">
+
+  <link rel="stylesheet" href="css/pyscript/core.css"> <!-- https://pyscript.net/releases/2024.5.2/core.css -->
+  
+
+
+  <!-- IMAGE VIEWER -->
+  <link rel="stylesheet" href="css/leaflet.css">
+  <link rel="stylesheet" href="css/jquery/jquery-ui.css" media="screen"> <!-- http://code.jquery.com/ui/1.12.1/themes/smoothness/jquery-ui.css -->
+ 
+
+
+  <!-- on load -->
+  <script type="module">
+
+    // EVENTS for overlapping zones loading menu
+    // window.pyLoading_overlapping = new Event("loading_overlapped");
+    // window.pyReady_overlapping = new Event("ready_overlapped");
+
+    // addEventListener("loading_overlapped", () => {
+    //     console.log("Load overlapping zones");
+    //     document.getElementById('loading_overlapping').style.display = "block";
+    //     loading_overlapping.showModal();
+    // });
+
+    // addEventListener("ready_overlapped", () => {
+    //     console.log("loaded_overlapped!!!");
+    //     document.getElementById('loading_overlapping').style.display = "none";
+    //     loading_overlapping.close();
+    // });
+
+
+
+    // function loading_open(loading) {
+    //   loading.showModal();
+    // }
+
+    function loading_close(loading) {
+      loading.close();
+      loading.style.display = "none";
+    }
+
+    // Read currend document image and JSON
+
+    const queryString = window.location.search;
+    const urlParams = new URLSearchParams(queryString);
+    const json_name = urlParams.get('json_file')
+    const img_name = urlParams.get('img_file')
+    const toml_name = urlParams.get('toml')
+
+    document.querySelector("#bb_image_name").value = img_name
+    document.querySelector("#bb_json_name").value = json_name
+    let a = document.getElementById('toml-script-tag')
+
+    console.log(a)
+
+    document.getElementById('toml-script-tag').setAttribute("config", toml_name)
+
+    console.log(a)
+
+
+    
+
+
+    const loading = document.getElementById('loading');
+    // addEventListener('py:ready', () => loading_close(loading));
+    // addEventListener('py:done', () => loading_close(loading)); # BETTER
+    // loading.showModal();
+  </script>
+
+</head>
+
+<body>
+  <dialog id="loading">
+    <div class="loader"></div>
+    <h1>Loading...</h1>
+  </dialog>
+
+  <dialog id="loading_overlapping">
+    <div class="loader"></div>
+    <h1>Loading Overlapping Zones...</h1>
+  </dialog>
+
+  <!--  HIDDEN ELEMENT TO COMUNICATE WITH PYSCRIPT -->
+
+  <!-- Name Image -->
+  <input type="hidden" id="bb_image_name"  value="" />
+  <input type="hidden" id="bb_json_name"  value="" />
+
+
+  <!-- Last Click Image Coordinates -->
+  <input type="hidden" id="click_x" value="0" />
+  <input type="hidden" id="click_y" value="0" />
+  <button id="click_full_img" style="display: none;">click_full_img</button>
+
+  <!-- New BB  -->
+  <button id="add-new-bb-div" style="display: none;">Add new bb</button>
+
+ 
+
+  <!-- Selected Annotations -->
+  <input type="hidden" id="current_bb_image_id"  value="None" />
+  <input type="hidden" id="selected_bb_image_id"  value="None" />
+
+  <!--  END -- HIDDEN ELEMENT TO COMUNICATE WITH PYSCRIPT -->
+
+
+  <div class="navbar navbar-inverse" role="navigation">
+    <div class="navbar-header">
+      <div class="logo"><a href="index.html"><h1>Viewer&Corrector</h1></a></div>
+      <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+        <span class="sr-only">Toggle navigation</span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+    </div>
+  </div>
+
+<!-- MAIN  ----------------------------------------------------------------------------------------------------------------->
+  <div class="content-page">
+    <div class="templatemo-content-wrapper">
+      <div class="templatemo-content-full">
+        <!-- Init - Option Box ------------------------------ -->
+        <div class="content-box">
+          <div id="top-option-section">
+            <p>Download the current annotation JSON: <a href="#" class="btn btn-success" id="save_json">Download</a></p>
+            <p><label for="upload_json">Upload annotation JSON file:</label>
+              <input type="file" id="upload_json"></p>
+          </div>
+        </div>
+
+        <!-- functions bar ------------------------------
+        <div class="content-box">
+          <div id="functions-bar">
+              <div href="#" class="tooltip-funcs" onclick="add_bb()"><i class="icon-function icon-function-new", id="new-bb-func-btn"></i><span class="tooltip-funcs-text">Nuovo BB</span></div>   
+          </div>
+        </div> -->
+
+
+        <!-- Big Image Viewer ------------------------------- -->
+        <div class="content-box">
+          <div id="top-full-img">
+            <!-- <button id="load_bb_image_button">Reload Image</button> -->
+            <div>
+              <label class="checkbox-inline"><input type="checkbox" checked="false" id="labels_in_full_img" value="label" onclick="display_labels()"><p>Show Labels</p></label>
+            </div>
+
+            <div class="row checkboxes_row_full_img">
+              <div class="col-md-12 margin-bottom-15" id="checkboxes_full_img">
+                <label class="checkbox-inline"><input type="checkbox" id="all_cat_in_full_img" value="all" onclick="select_all_categories()"><p>All</p></label>
+              </div>
+            </div>
+          </div>
+
+          <div id="labelled_img">
+            <img id="full_image" src=""></img>
+
+          </div>
+
+        </div>
+        <!-- https://phuoc.ng/collection/html-dom/create-resizable-split-views/ -->
+
+
+        <!-- Annotation View Panels --------------------------- -->
+
+        <!-- Annotations tab --------------------------- -->
+        <div class="tab">
+          <button class="tablinks active" id="focus_tab_but" onclick="openTab(event, 'focus_tab')">Focus View</button>
+          <button class="tablinks" id="annotation_tab_but" onclick="openTab(event, 'annotation_tab')">Annotation View</button>
+          <button class="tablinks" id="overlapp_tab_but" onclick="openTab(event, 'overlapping_tab')">Overlapping View</button>
+        </div>
+
+        <div class="content-box bb-viewer-box-main">
+          <!-- Focus tab --------------------------- -->
+          <div id="focus_tab" class="tabcontent" style="display: inline-block;">
+            <div id="bbs-viewer-box">
+              <div class="out_category_top">
+                <label for="selector_category">Focus View</label>
+                <div></div>
+                <div id="out_category_top_info">
+                  <div id="out_category_head_focus">Click on the image to focus on annotation.</div>
+                </div>
+              </div>
+              <div class="out_category" id="out_category_focus" class="panel-body"></div>
+            </div>
+          </div>
+
+          <!-- Annotation tab --------------------------- -->
+          <div id="annotation_tab" class="tabcontent">
+            <div id="bbs-viewer-box">
+              <div class="out_category_top">
+                <label for="selector_category">Annotation View</label>
+                <select class="form-control margin-bottom-15" id="selector_category"> </select>
+                <div id="out_category_top_info">
+                  <div id="out_category_head_annot">Select a Category</div>
+                </div>
+              </div>
+              <div class="out_category" id="out_category_annot" class="panel-body"></div>
+            </div>
+          </div>
+
+          <!-- Overlapping Annotation tab --------------------------- -->
+          <div id="overlapping_tab" class="tabcontent">
+            <div id="bbs-viewer-box">
+              <div class="out_category_top">
+                <label for="selector_category">Overlapping Annotations View</label>
+                <div></div>
+                <button type="button" id="prev_overl_btn" class="btn btn-default"><< Prev Overlapping Zone</button>
+                <button type="button" id="next_overl_btn" class="btn btn-default">Next Overlapping Zone >></button>
+                <div id="out_category_top_info">
+                  <div id="out_category_head_overl"></div>
+                  <div id="out_category_head_overl_2"></div>
+                </div>
+              </div>
+              <div class="out_category" id="out_category_overl" class="panel-body"></div>
+            </div>
+          </div>
+
+          <div class="resizer" id="dragMe"></div>
+
+          <div id="bb-viewer-focus-box">
+            <div id="out_focus_box">
+              <div id="focus_correction_box"></div>
+              <div id='annot_message'></div>
+              <div id="current_selected"></div>
+              <div id="img_focus_box"></div>
+              <div id="extra_info_bb"></div>
+
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+
+
+  <footer class="templatemo-footer">
+    <div class="templatemo-copyright">
+      <p>Copyright &copy; 2024 Giuseppe De Gregorio</p>
+    </div>
+  </footer>
+
+
+  <!-- Modal -->
+  <div class="modal fade" id="confirmModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+          <h4 class="modal-title" id="myModalLabel">Are you sure you want to sign out?</h4>
+        </div>
+        <div class="modal-footer">
+          <a href="sign-in.html" class="btn btn-primary">Yes</a>
+          <button type="button" class="btn btn-default" data-dismiss="modal">No</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script type="text/javascript" src="js/jquery/jquery-3.2.1.min.js"></script> <!-- http://code.jquery.com/jquery-3.2.1.min.js -->
+  <script type="text/javascript" src="js/jquery/jquery-ui.min.js"></script> <!-- http://code.jquery.com/ui/1.12.1/jquery-ui.min.js -->
+
+  <!-- <script src="js/jquery.min.js"></script> -->
+  <script src="js/bootstrap.min.js"></script>
+  <script src="js/Chart.min.js"></script>
+  <script src="js/templatemo_script.js"></script>
+  <script src="js/cliplets_selector.js"></script>
+
+  <!-- Functions Bar -->
+  <script type="text/javascript" src="js/functions_bb.js"></script>
+
+
+
+  <!-- CATEGORY SELECTOR - chack box controller  -->
+  <script type="text/javascript" src="js/category_selector.js"></script>
+  <script type="text/javascript">
+    // force all cbox to false
+    document.getElementById("all_cat_in_full_img").checked = false;
+    document.getElementById("labels_in_full_img").checked = false;
+
+  </script>
+
+  <!-- IMAGE VIEWER -->
+  <script type="text/javascript" src="js/leaflet.js"></script> <!-- https://unpkg.com/leaflet@1.3.1/dist/leaflet.js -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/0.4.2/leaflet.draw.css"/>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/0.4.2/leaflet.draw.js"></script>
+  <script src="js/imgViewer2.js"></script>
+  <script src="js/imgViewer2_apply.js"></script>
+
+  <script type="module" src="https://pyscript.net/releases/2024.5.2/core.js"></script> <!-- https://pyscript.net/releases/2024.5.2/core.js -->
+
+
+  <script id="toml-script-tag" type="py" src="./src/interface.py" config="pyscript.toml"></script>
+
+
+
+  <script type="text/javascript">
+    function openTab(evt, tabName) {
+      var i, tabcontent, tablinks;
+      tabcontent = document.getElementsByClassName("tabcontent");
+      for (i = 0; i < tabcontent.length; i++) {
+        tabcontent[i].style.display = "none";
+      }
+      tablinks = document.getElementsByClassName("tablinks");
+      for (i = 0; i < tablinks.length; i++) {
+        tablinks[i].className = tablinks[i].className.replace(" active", "");
+      }
+      document.getElementById(tabName).style.display = "inline-block";
+      evt.currentTarget.className += " active";
+    }
+  </script>
+
+</body>
+</html>

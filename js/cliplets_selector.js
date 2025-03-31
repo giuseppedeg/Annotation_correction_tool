@@ -8,7 +8,8 @@ var function_letter_clickAndHide = function(){
     $('.show_hide').click(function() {
 
         var isvisible = $(this).next('.correction_letter').is(':visible');
-        var isCtrl = window.event.ctrlKey;
+        var isCtrl = window.event.shiftKey;
+        // ctrlKey does not work in MacOS
         var is_selected = $(this).hasClass("selected_letter");
 
         selected_id = $(this).attr('id')
@@ -35,7 +36,6 @@ var function_letter_clickAndHide = function(){
           }
           $(this).removeClass("selected_letter"); 
           $('#current_bb_image_id').val("None");
-          $('#current_selected').html("");
 
 
         }
@@ -59,7 +59,6 @@ var function_letter_clickAndHide = function(){
           //$(this).find('img').addClass("selected_letter");
           $(this).addClass("selected_letter");
           $('#current_bb_image_id').val(selected_id);
-          $('#current_selected').html("Annotation ID:"+selected_id.split("_")[2]);
 
         }
         

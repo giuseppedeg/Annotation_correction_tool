@@ -4,45 +4,72 @@ from pyweb import pydom
 import js
 from js import URL, document, window, console
 from pyodide.ffi.wrappers import add_event_listener
-from file_manager import download_json, upload_json
-from PIL import Image
+from file_manager import download_file, upload_json
 from manager import Manager, ID_UNKNOWN, STR_UNKNOWN_CAT
+from fileformat_handler import FFHandler, EXT
 import os
-import time
-import const
+import shutil
+import json
+import random
 
 """
 This file manage the interactions between the GUI and the business logic manager
 """
-# FULL IMAGE VIEWER -------------------------------------------------------------------------------------------
+# GLOBAL VARs -------------------------------------------------------------------------------------------
+class AppManager():
+    def __init__(self) -> None:
+        self.manager = None
+        self.input_bb_image_id = -1
 
-input_bb_image_name = document.querySelector("#bb_image_name")
-input_bb_json_name = document.querySelector("#bb_json_name")
+projectfile_h = FFHandler() #handler for save/load the project file
+app = AppManager() # the manager contains all the business logic 
 
-input_bb_image_name = input_bb_image_name.value # it's a str
-input_bb_json_name = input_bb_json_name.value # it's a str
+# m = None # it contains all the business logic 
+# input_bb_image_id = -1
 
-m = Manager(input_bb_image_name, input_bb_json_name,  font="assets/Anonymous_Pro.ttf")
-
-input_bb_image_id = m.get_img_id()
-
-m.set_all_bt_categories_default() #Set to BT1 all annotation without bt
-
-# dictionary of all bbs
-bbs_alpha = m.get_list_annotations_per_class_byID(8)
-#[{'image_id': 'PHerc_152_157_cr_21', 'category_id': 8, 'bbox': [986.2196655273438, 535.0287475585938, 108.16619873046875, 127.21624755859375], 'score': 0.4420078992843628, 'id': 0, 'tags': {'BaseType': ['bt1']}}, 
 all_bbs = {}
 #all_bbs[8] = [[[100,200],[200,200],[200,100],[100,100]],[[1000,600],[600,600],[600,1000],[1000,1000]]]
 
+project_file_name = document.querySelector("#project_file_name")
+project_file_name = project_file_name.value # it's a str
+
+
+# Interface methods -----------------------------------------------------------------------------------
+@when("change", "#file-input")
+async def handle_upload(event):
+    """
+    Load a project File
+    """
+
+    open_load()
+
+    file_input = document.getElementById("file-input")
+    
+    # if not file_input.files.length:
+    #     document.getElementById("output").innerText = "No file selected."
+    #     return
+    
+    file = file_input.files.item(0)  # Get the first selected file
+
+    array_buf = await file.arrayBuffer() # Get arrayBuffer from file
+    file_bytes = array_buf.to_bytes() # convert to raw bytes array 
+
+    project_dic = json.loads(file_bytes)
+
+    load_project(project_dic)
+    init()
+
+
+
 def _update_all_bbs(key_id):
-    bbs_list = m.get_list_annotations_per_class_byID(key_id, image_ID=input_bb_image_id)
+    bbs_list = app.manager.get_list_annotations_per_class_byID(key_id, image_ID=app.input_bb_image_id)
     
     bbs = []
 
     for elem in bbs_list:
         json_bb = elem["bbox"]
         x = json_bb[0]
-        y = -1*(json_bb[1]-m.img_height)
+        y = -1*(json_bb[1]-app.manager.img_height)
         w = json_bb[2]
         h = json_bb[3]
 
@@ -53,33 +80,68 @@ def _update_all_bbs(key_id):
     all_bbs[key_id] = bbs
 
 
-@when("click", "#save_json")
+@when("click", "#downloadjson-but")
 def get_current_state_json(event):
-    m.save_json()
+    tmp_folder = ''.join(random.choices("ABCDEFGHIJKLMNOPQRSTUVXWZ", k=5))
 
-    json_filemane = m.get_json_path()
+    while os.path.exists(tmp_folder):
+        tmp_folder = ''.join(random.choices("ABCDEFGHIJKLMNOPQRSTUVXWZ", k=5))
 
-    download_json(json_filemane)
+    os.mkdir(tmp_folder)
 
-#@when("click", "#upload_json")
-async def set_current_state_json(event):
-    open_load()
-    current_json_filemane = m.get_json_path()
-
-    new_file = document.getElementById("upload_json").files
-    new_file = new_file.item(0)
+    json_filemane = os.path.join(tmp_folder, app.manager.get_json_path())
     
-    json_bytes: bytes = await get_bytes_from_file(new_file)
+    app.manager.save_json(json_filemane)
 
-    upload_json(current_json_filemane, json_bytes)
-    m.reload_json() #Set to BT1 all annotation without bt
-    view_original_image()
-    #click_selector_category(None)
-    close_load()
+    download_file(json_filemane)
 
-async def get_bytes_from_file(file):
-    array_buf = await file.arrayBuffer()
-    return array_buf.to_bytes()
+    shutil.rmtree(tmp_folder)
+
+
+@when("click", "#downloadproj-but")
+def get_current_state_projfile(event):
+    tmp_folder = ''.join(random.choices("ABCDEFGHIJKLMNOPQRSTUVXWZ", k=5))
+
+    while os.path.exists(tmp_folder):
+        tmp_folder = ''.join(random.choices("ABCDEFGHIJKLMNOPQRSTUVXWZ", k=5))
+
+    os.mkdir(tmp_folder)
+
+    json_filemane = os.path.join(tmp_folder, app.manager.get_json_path())
+    img_filename = os.path.join(tmp_folder, app.manager.img_name)
+    projfile_filename = os.path.join(tmp_folder, os.path.splitext(app.manager.img_name)[0]+EXT)
+
+    app.manager.save_json(json_filemane)
+    app.manager.save_img(img_filename)
+
+    projectfile_h.save_formattedfile(img_filename, json_filemane, output_path=tmp_folder)
+
+    download_file(projfile_filename)
+
+    shutil.rmtree(tmp_folder)
+
+
+
+
+# #@when("click", "#upload_json")
+# async def set_current_state_json(event):
+#     open_load()
+#     current_json_filemane = app.manager.get_json_path()
+
+#     new_file = document.getElementById("upload_json").files
+#     new_file = new_file.item(0)
+    
+#     json_bytes: bytes = await get_bytes_from_file(new_file)
+
+#     upload_json(current_json_filemane, json_bytes)
+#     app.manager.reload_json() #Set to BT1 all annotation without bt
+#     view_original_image()
+#     #click_selector_category(None)
+#     close_load()
+
+# async def get_bytes_from_file(file):
+#     array_buf = await file.arrayBuffer()
+#     return array_buf.to_bytes()
 
 
 
@@ -93,7 +155,7 @@ def view_full_bb_image(event, zoom=0, x=0.50, y=0):
 
     if all_bb == False:
         filter_cat = []
-        for ind, _ in enumerate(m.get_categories()):
+        for ind, _ in enumerate(app.manager.get_categories()):
             if document.getElementById(f'{ind}_cat_in_full_img').checked:
                 filter_cat.append(int(document.getElementById(f'{ind}_cat_in_full_img').value))
     else:
@@ -101,7 +163,7 @@ def view_full_bb_image(event, zoom=0, x=0.50, y=0):
 
     #print("Loading an Image!!", filter_cat)
 
-    image = m.get_img_bboxes(filter_cat=filter_cat)
+    image = app.manager.get_img_bboxes(filter_cat=filter_cat)
     view_original_image(img=image, zoom=zoom, x=x, y=y)
 
 
@@ -118,8 +180,12 @@ def view_original_image(img=None, zoom=0, x=0.50, y=0):
     # display(image, target="labelled_img", append=False)
     # document.querySelector(f"#labelled_img img").setAttribute("id", "full_image")
 
-    image_path = m.get_img_path()
-    document.querySelector(f"#full_image").setAttribute("src", image_path)
+    # image_path = m.get_img_path()
+    # document.querySelector(f"#full_image").setAttribute("src", image_path)
+
+    image = app.manager.get_img()
+    display(image, target="labelled_img", append=False)
+    document.querySelector(f"#labelled_img img").setAttribute("id", "full_image")
 
     window.load_imgViewer(zoom,x,y)
 
@@ -131,11 +197,11 @@ def view_level_bb_image(event):
     """
     value = int(event.srcElement.value)
     checked = event.srcElement.checked
-    label = m.decode_category(value)
+    label = app.manager.decode_category(value)
 
     if checked:
         _update_all_bbs(value)
-        color = m.get_color_category(value)
+        color = app.manager.get_color_category(value)
         window.add_bbs_layer(value, all_bbs[value], label, color)
     else:
         window.remove_bbs_layer(value)
@@ -158,8 +224,8 @@ def change_full_bb_view(event):
     current_bb_image_id = document.querySelector("#current_bb_image_id").value
     current_bb_image_id = int(current_bb_image_id.split("_")[-1])
      
-    bb = m.get_bb(current_bb_image_id)
-    img_size = m.get_img_size()
+    bb = app.manager.get_bb(current_bb_image_id)
+    img_size = app.manager.get_img_size()
 
     img_width = img_size[0]
     img_height = img_size[1]
@@ -180,7 +246,7 @@ def set_fullimg_zoom_and_position(zoom=1,x=0.5,y=0):
 
 
 def set_checkboxes_full_img():
-    all_cat = m.get_categories()
+    all_cat = app.manager.get_categories()
 
     for ind, cat in enumerate(all_cat):
         id_cat = cat['id']
@@ -222,7 +288,7 @@ def click_on_big_img(event):
     click_x = int(document.querySelector("#click_x").value)
     click_y = int(document.querySelector("#click_y").value)
 
-    annotations = m.get_list_annotations_per_point(x=click_x, y=click_y, image_ID=input_bb_image_id)
+    annotations = app.manager.get_list_annotations_per_point(x=click_x, y=click_y, image_ID=app.input_bb_image_id)
 
     view_bboxes(annotations, "focus")
 
@@ -236,7 +302,7 @@ def click_annotation_tab(event):
     click_selector_category(None)
 
 def set_selector_category():
-    all_cat = m.get_categories()
+    all_cat = app.manager.get_categories()
 
     for cat in all_cat:
         id_cat = cat['id']
@@ -256,7 +322,7 @@ def click_selector_category(event):
     cat_id = int(selector_category.selectedOptions[0].value)
     cat_text = selector_category.selectedOptions[0].text
 
-    all_bbs = m.get_list_annotations_per_class_byID(cat_id, image_ID=input_bb_image_id)
+    all_bbs = app.manager.get_list_annotations_per_class_byID(cat_id, image_ID=app.input_bb_image_id)
 
     view_bboxes(all_bbs, "annot")
 
@@ -296,10 +362,10 @@ def display_focus(event):
         display(HTML(new_letter_div_str), target="focus_correction_box", append=False)
 
         # set annotatiion category
-        all_cat = m.get_categories()
+        all_cat = app.manager.get_categories()
         #selector_category = document.querySelector("#selector_category")
         #cat_id = int(selector_category.selectedOptions[0].value)
-        cat_id = m.get_category_byID(current_bb_image_id)
+        cat_id = app.manager.get_category_byID(current_bb_image_id)
 
         for cat in all_cat:
             curr_id_cat = cat['id']
@@ -317,8 +383,12 @@ def display_focus(event):
             pydom[f"#cat_selector_all"][0].append(new_option)
 
         # set BT category
-        all_bts = m.get_bt_categoty_list()
-        current_BT = m.get_bt_category(current_bb_image_id)[0]
+        all_bts = app.manager.get_bt_categoty_list()
+        current_BT = app.manager.get_bt_category(current_bb_image_id)
+
+        if isinstance(current_BT, list):
+            current_BT = current_BT[0]
+
         for bt_cat in all_bts:
             new_option = document.createElement("option")
             new_option.value = bt_cat
@@ -332,23 +402,23 @@ def display_focus(event):
 
         # FOCUS bb image box
 
-        bb_img = m.get_large_bb_image(current_bb_image_id)
+        bb_img = app.manager.get_large_bb_image(current_bb_image_id)
 
         display(bb_img, target=f"img_focus_box", append=False)     
 
 
         # get extra info from json
-        extra_info = m.get_all_extra_info(current_bb_image_id)
+        extra_info = app.manager.get_all_extra_info(current_bb_image_id)
 
         new_extrainfo_div_str = f"<table class='styled-table'>  <tbody>"
-        
+
         for pr_name, pr_value in extra_info.items():
             if type(pr_value) is dict:
                 for pr_in_name, pr_in_value in pr_value.items():
                     new_extrainfo_div_str += f"<tr> <td>{pr_name}:{pr_in_name}</td> <td>{pr_in_value}</td> </tr>"
             else:
                 if pr_name == "zone_id":
-                    zone_name = m.get_zone_name(pr_value)
+                    zone_name = app.manager.get_zone_name(pr_value)
                     if zone_name is None:
                         zone_name = pr_value
                     new_extrainfo_div_str += f"<tr> <td>{pr_name}</td> <td>{zone_name}</td> </tr>"
@@ -357,7 +427,7 @@ def display_focus(event):
          
         new_extrainfo_div_str += f"</tbody>  </table>"
 
-        display(HTML(new_extrainfo_div_str), target="extra_info_bb", append=False)
+        display(HTML(new_extrainfo_div_str), target="extra-info-bb", append=False)
 
 
 
@@ -373,7 +443,7 @@ def view_current_overl(event):
     #clear_content()
     display(f"", target="out_category_annot", append=False)
 
-    annotations = m.overlappinglist.current()
+    annotations = app.manager.overlappinglist.current()
 
     display(annotations[0]["id"], target="annot_message", append=False)
 
@@ -381,14 +451,14 @@ def view_current_overl(event):
 
 @when("click", "#prev_overl_btn")
 def view_prev_overl(event):
-    annotations = m.overlappinglist.prev()
+    annotations = app.manager.overlappinglist.prev()
 
     if annotations is not None:
         view_bboxes(annotations, "overl")
 
 @when("click", "#next_overl_btn")
 def view_next_overl(event):
-    annotations = m.overlappinglist.next()
+    annotations = app.manager.overlappinglist.next()
 
     if annotations is not None:
         view_bboxes(annotations, "overl")
@@ -403,17 +473,17 @@ def view_bboxes(annotations, target):
         - annotations: list of annotations
         - target: target id container. between [focus|annot|overl|]
     """
-    all_cat = m.get_categories()
+    all_cat = app.manager.get_categories()
     #clear focus bb image
     clear_content()
 
     #clear out categories div
     display(f"Num of Annotations:{len(annotations)}", target=f"out_category_head_{target}", append=False)
     if target in ["overl"]:
-        display(f"Overlapping Zones:{m.overlappinglist.current_id+1}/{m.overlappinglist.len()}", target="out_category_head_overl_2", append=False)
+        display(f"Overlapping Zones:{app.manager.overlappinglist.current_id+1}/{app.manager.overlappinglist.len()}", target="out_category_head_overl_2", append=False)
 
     for idx, bb_info in enumerate(annotations):
-        bb_img = m.get_bb_image(bb_info["id"])
+        bb_img = app.manager.get_bb_image(bb_info["id"])
         cat_id = bb_info["category_id"]
 
         new_letter_div = pydom.create("div", classes=["letter"])
@@ -435,7 +505,7 @@ def view_bboxes(annotations, target):
 
         display(bb_img, target=f"a_img_{bb_info['id']}", append=False)
         if target in ["focus","overl"]:
-            display(f"{m.decode_category(bb_info['category_id'])}", target=f"a_img_{bb_info['id']}", append=True)
+            display(f"{app.manager.decode_category(bb_info['category_id'])}", target=f"a_img_{bb_info['id']}", append=True)
         if 'score' in bb_info:
             display(f"Score:{bb_info['score']:.2f}", target=f"a_img_{bb_info['id']}", append=True)
 
@@ -466,15 +536,37 @@ def clear_content():
 def clear_focus_bb():
     # Clear Focus BB
     display("", target="annot_message", append=False)
-    display("", target="current_selected", append=False)       
-    display("", target="extra_info_bb", append=False)       
+    display("", target="extra-info-bb", append=False)       
     display("", target="focus_correction_box", append=False)
     display("", target="img_focus_box", append=False)
   
     document.querySelector("#current_bb_image_id").value = "None"
     document.querySelector("#selected_bb_image_id").value = "None"
 
+@when("click", "#test_btn")
+def update_bb_img(e):
+    # update big image
+
+    cat_selector = document.querySelectorAll('#checkboxes_full_img > .checkbox-inline')
+
+    for check_elem in cat_selector:
+        if check_elem.children[1].innerHTML == "All":
+            continue
+        else:
+            if check_elem.children[0].checked:
+                value = int(check_elem.children[0].value)
+                color = app.manager.get_color_category(value)
+                label = app.manager.decode_category(value)
+                window.remove_bbs_layer(value)
+                _update_all_bbs(value)
+                window.add_bbs_layer(value, all_bbs[value], label, color)
+
+
 def update_views():
+    # update big image
+    update_bb_img(None)
+
+    # Update annotation tabs
     is_focus_active = document.querySelector("#focus_tab_but").classList.contains("active")
     is_annotation_active = document.querySelector("#annotation_tab_but").classList.contains("active")
     is_overlapp_active = document.querySelector("#overlapp_tab_but").classList.contains("active")
@@ -493,9 +585,12 @@ def add_new_annotation(event):
     category_id = int(event.target.getAttribute("category_id"))
   
     bb = [float(x) for x in bb]
-    bb[1] = m.img_height-bb[1]-bb[3]
+    bb[1] = app.manager.img_height-bb[1]-bb[3]
 
-    m.add_new_annotation(bb, category=category_id)
+    app.manager.add_new_annotation(bb, category=category_id)
+
+    update_bb_img(None)
+
 
 def delete_annotation_single(event):
     current_bb_image_id = document.querySelector("#current_bb_image_id").value
@@ -507,6 +602,7 @@ def delete_annotation_single(event):
         current_bb_image_id = int(current_bb_image_id.split("_")[-1])
 
         delete_annotation(current_bb_image_id)
+
 
 def delete_annotation_list(event):
     selected_bb_image_id = document.querySelector("#selected_bb_image_id").value
@@ -522,20 +618,21 @@ def delete_annotation_list(event):
             delete_ids.append(current_bb_image_id)
         delete_annotation(delete_ids)
 
+
 def delete_annotation(bb_id):
-    deleted = m.delete_annotation(bb_id)
+    deleted = app.manager.delete_annotation(bb_id)
+    print("deleted")
 
     # reload GUI
     update_views()
     
     display(f"Annotation Deleted.", target="annot_message", append=False)
 
+
 def save_new_category_single(event):
     current_bb_image_id = document.querySelector("#current_bb_image_id").value
     display(f"", target="annot_message", append=False)
-    display(f"", target="current_selected", append=False)
-    display("", target="extra_info_bb", append=False)       
-
+    display("", target="extra-info-bb", append=False)       
 
     if current_bb_image_id == "None":
         display("Error in changing annotation!", target="annot_message", append=True)
@@ -549,8 +646,9 @@ def save_new_category_single(event):
         new_cat_id = int(selector_category.selectedOptions[0].value)
 
         save_new_category(current_bb_image_id,new_cat_id)
-        m.save_json()
-        display(f"New category {m.decode_category(new_cat_id)}.", target="annot_message", append=False)
+        app.manager.save_json()
+        display(f"New category {app.manager.decode_category(new_cat_id)}.", target="annot_message", append=False)
+
 
 def save_new_category_list(event):
     selected_bb_image_id = document.querySelector("#selected_bb_image_id").value
@@ -572,26 +670,28 @@ def save_new_category_list(event):
             current_bb_image_id = int(current_bb_image_id.split("_")[-1])
             list_ids.append(current_bb_image_id)
         
-        m.set_category_byID(list_ids, new_cat_id)
-        m.set_bt_category(list_ids, new_BT_cat)
+        app.manager.set_category_byID(list_ids, new_cat_id)
+        app.manager.set_bt_category(list_ids, new_BT_cat)
         # m.save_json() ## PERCHE?
         
         # reload GUI
         update_views()    
-          
+
+
 def save_new_category(bb_id, new_cat_id):
             
-    m.set_category_byID(bb_id, new_cat_id)
+    app.manager.set_category_byID(bb_id, new_cat_id)
 
     # reload GUI
     update_views()
     
-    display(f"New category {m.decode_category(new_cat_id)}.", target="annot_message", append=True)
+    display(f"New category {app.manager.decode_category(new_cat_id)}.", target="annot_message", append=True)
+
 
 def save_new_BT_category(bb_id, new_BT_cat):
     display(f"New BT Type {new_BT_cat}.", target="annot_message", append=True)
         
-    m.set_bt_category(bb_id, new_BT_cat)
+    app.manager.set_bt_category(bb_id, new_BT_cat)
 
     # reload GUI
     # click_selector_category(None)
@@ -601,15 +701,28 @@ def save_new_BT_category(bb_id, new_BT_cat):
 
 
 # Initialization ------------
+def load_project(project_dic):
+    image, json_data, name, img_ext = projectfile_h.decode_formattedfile(project_dic)
+    img_name = f"{name}{img_ext}"
+
+    #document.getElementById("output_new").innerText = app
+    
+    app.manager = Manager(image, json_data, img_name,  font="assets/Anonymous_Pro.ttf")
+    app.input_bb_image_id = app.manager.get_img_id()
+
+
 def init():
     set_selector_category()
     set_checkboxes_full_img()
     view_original_image()
     click_selector_category(None)
     close_load()
-    add_event_listener(document.getElementById("upload_json"), "change", set_current_state_json)
+    #add_event_listener(document.getElementById("upload_json"), "change", set_current_state_json)
 
-    
+    document.getElementById('downloadproj-but').disabled = False
+    document.getElementById('downloadjson-but').disabled = False
+    document.getElementById('loadproj-but').setAttribute("disabled", True)
+
 
 def close_load():
     loading = document.getElementById('loading')
@@ -617,11 +730,25 @@ def close_load():
     loading.style.display = "none"
     print("Loaded!")
 
+
 def open_load():
     # display("", target="labelled_img", append=False)
     #document.querySelector(f"#full_image").setAttribute("src", "")
     loading = document.getElementById('loading')
     #loading.open()
     loading.style.display = "flex"
+
+
+if project_file_name == "new":
+    # print("Nuovo progetto")
+    close_load()
+
+else:
+    # print("Carica progetto")
+    file_bytes = projectfile_h.load_coded_formattedfile(project_file_name)
+
+    load_project(file_bytes)
+    init()
+
     
-init()
+    

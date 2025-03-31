@@ -8,9 +8,9 @@ packages = ["Pillow", "distinctipy"]
 "{FROM}/src/manager.py" = "{TO}/"
 "{FROM}/src/file_manager.py" = "{TO}/"
 "{FROM}/src/const.py" = "{TO}/"
+"{FROM}/src/fileformat_handler.py" = "{TO}/"
 "{FROM}/assets/Anonymous_Pro.ttf" = "{TO}/assets/Anonymous_Pro.ttf"
 
 # END COMMON PART
-"{FROM}/data/docs/10004/TM3563_P.Tor.Choach.12.01.jpg" = "{TO}/data/docs/10004/TM3563_P.Tor.Choach.12.01.jpg"
-"{FROM}/data/docs/10004/predictions.json" = "{TO}/data/docs/10004/predictions.json"
+"{FROM}/data/docs/10004/TM3563_P.Tor.Choach.12.01.pap" = "{TO}/data/docs/10004/TM3563_P.Tor.Choach.12.01.pap"
 

@@ -2,78 +2,59 @@
 <head>
   <meta charset="utf-8">
   <!--[if IE]><meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1"><![endif]-->
-  <title>ViewerAndCorrector</title>
+  <title>GlyFix</title>
+  <link rel="icon" href="assets/icons/favicon.ico" type="image/x-icon">
   <meta name="keywords" content="" />
   <meta name="description" content="" />
   <meta name="viewport" content="width=device-width">
-  <link rel="stylesheet" href="css/templatemo_main.css">
-  <link rel="stylesheet" href="css/my_css.css">
+  <link rel="stylesheet" href="css/main.css">
+  <link rel="stylesheet" href="css/corrector.css">
 
-  <link rel="stylesheet" href="css/pyscript/core.css"> <!-- https://pyscript.net/releases/2024.5.2/core.css -->
+  <link rel="stylesheet" href="https://pyscript.net/releases/2024.5.2/core.css"> <!-- https://pyscript.net/releases/2024.5.2/core.css -->
 
-
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+  <script type="text/javascript" src="http://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+  
   <!-- IMAGE VIEWER -->
   <link rel="stylesheet" href="css/leaflet.css">
-  <link rel="stylesheet" href="css/jquery/jquery-ui.css" media="screen"> <!-- http://code.jquery.com/ui/1.12.1/themes/smoothness/jquery-ui.css -->
+  <link rel="stylesheet" href="http://code.jquery.com/ui/1.12.1/themes/smoothness/jquery-ui.css" media="screen">
  
+  <!-- 
+  <script type="text/javascript" src="http://code.jquery.com/jquery-3.2.1.min.js"></script>  http://code.jquery.com/jquery-3.2.1.min.js    js/jquery/jquery-3.2.1.min.js
+  <script type="text/javascript" src="js/jquery/jquery-ui.min.js"></script> http://code.jquery.com/ui/1.12.1/jquery-ui.min.js
+  -->
+  <script src="js/cliplets_selector.js"></script>
+
+  <!-- Functions Bar -->
+  <script type="text/javascript" src="js/functions_bb.js"></script>
+
+
 
 
   <!-- on load -->
   <script type="module">
-
-    // EVENTS for overlapping zones loading menu
-    // window.pyLoading_overlapping = new Event("loading_overlapped");
-    // window.pyReady_overlapping = new Event("ready_overlapped");
-
-    // addEventListener("loading_overlapped", () => {
-    //     console.log("Load overlapping zones");
-    //     document.getElementById('loading_overlapping').style.display = "block";
-    //     loading_overlapping.showModal();
-    // });
-
-    // addEventListener("ready_overlapped", () => {
-    //     console.log("loaded_overlapped!!!");
-    //     document.getElementById('loading_overlapping').style.display = "none";
-    //     loading_overlapping.close();
-    // });
-
-
-
-    // function loading_open(loading) {
-    //   loading.showModal();
-    // }
 
     function loading_close(loading) {
       loading.close();
       loading.style.display = "none";
     }
 
-    // Read currend document image and JSON
+    // Read currend document image and JSON or project file
 
     const queryString = window.location.search;
     const urlParams = new URLSearchParams(queryString);
-    const json_name = urlParams.get('json_file')
-    const img_name = urlParams.get('img_file')
     const toml_name = urlParams.get('toml')
+    const project_file_name = urlParams.get('project_file')
 
-    document.querySelector("#bb_image_name").value = img_name
-    document.querySelector("#bb_json_name").value = json_name
+    document.querySelector("#project_file_name").value = project_file_name
+
     let a = document.getElementById('toml-script-tag')
-
-    console.log(a)
-
     document.getElementById('toml-script-tag').setAttribute("config", toml_name)
 
-    console.log(a)
-
-
-    
-
-
     const loading = document.getElementById('loading');
-    // addEventListener('py:ready', () => loading_close(loading));
-    // addEventListener('py:done', () => loading_close(loading)); # BETTER
-    // loading.showModal();
+
   </script>
 
 </head>
@@ -91,10 +72,8 @@
 
   <!--  HIDDEN ELEMENT TO COMUNICATE WITH PYSCRIPT -->
 
-  <!-- Name Image -->
-  <input type="hidden" id="bb_image_name"  value="" />
-  <input type="hidden" id="bb_json_name"  value="" />
-
+  <!-- Project File -->
+  <input type="hidden" id="project_file_name"  value="" />
 
   <!-- Last Click Image Coordinates -->
   <input type="hidden" id="click_x" value="0" />
@@ -104,8 +83,6 @@
   <!-- New BB  -->
   <button id="add-new-bb-div" style="display: none;">Add new bb</button>
 
- 
-
   <!-- Selected Annotations -->
   <input type="hidden" id="current_bb_image_id"  value="None" />
   <input type="hidden" id="selected_bb_image_id"  value="None" />
@@ -113,37 +90,49 @@
   <!--  END -- HIDDEN ELEMENT TO COMUNICATE WITH PYSCRIPT -->
 
 
-  <div class="navbar navbar-inverse" role="navigation">
+
+
+  <div class="navbar navbar-inverse" id="navbar-header-top" role="navigation">
     <div class="navbar-header">
-      <div class="logo"><a href="index.html"><h1>Viewer&Corrector</h1></a></div>
-      <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
-        <span class="sr-only">Toggle navigation</span>
-        <span class="icon-bar"></span>
-        <span class="icon-bar"></span>
-        <span class="icon-bar"></span>
-      </button>
+      <div class="logo">
+        <a href="index.html"> 
+          <img src="assets/icons/icon.png" alt="GlyFix" width="50" height="50"> 
+          <h1>GlyFix</h1>
+        </a>
+      </div>
     </div>
   </div>
 
 <!-- MAIN  ----------------------------------------------------------------------------------------------------------------->
+
   <div class="content-page">
     <div class="templatemo-content-wrapper">
       <div class="templatemo-content-full">
         <!-- Init - Option Box ------------------------------ -->
         <div class="content-box">
+
           <div id="top-option-section">
-            <p>Download the current annotation JSON: <a href="#" class="btn btn-success" id="save_json">Download</a></p>
-            <p><label for="upload_json">Upload annotation JSON file:</label>
-              <input type="file" id="upload_json"></p>
+            <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#newprojModal">New Project</button>
+
+            <label for="file-input" class="btn btn-primary" id="loadproj-but">Open a Project</label>
+            <input type="file"  id="file-input" style="display: none;" accept=".pap">
+
+            <button type="button" class="btn btn-primary" id="downloadproj-but" disabled><a href="#">Download PAP</a></button>
+            <button type="button" class="btn btn-primary" id="downloadjson-but" disabled><a href="#">Download JSON</a></button>
+            
+            
+            
           </div>
         </div>
 
-        <!-- functions bar ------------------------------
-        <div class="content-box">
+        <div id="output_new"></div>
+
+        <!-- functions bar ------------------------------ -->
+        <!-- <div class="content-box">
           <div id="functions-bar">
               <div href="#" class="tooltip-funcs" onclick="add_bb()"><i class="icon-function icon-function-new", id="new-bb-func-btn"></i><span class="tooltip-funcs-text">Nuovo BB</span></div>   
           </div>
-        </div> -->
+        </div>  -->
 
 
         <!-- Big Image Viewer ------------------------------- -->
@@ -168,7 +157,6 @@
 
         </div>
         <!-- https://phuoc.ng/collection/html-dom/create-resizable-split-views/ -->
-
 
         <!-- Annotation View Panels --------------------------- -->
 
@@ -231,9 +219,9 @@
             <div id="out_focus_box">
               <div id="focus_correction_box"></div>
               <div id='annot_message'></div>
-              <div id="current_selected"></div>
+              <!-- <div id="current_selected"></div> -->
               <div id="img_focus_box"></div>
-              <div id="extra_info_bb"></div>
+              <div id="extra-info-bb"></div>
 
             </div>
           </div>
@@ -253,33 +241,30 @@
   </footer>
 
 
+
+
+
   <!-- Modal -->
-  <div class="modal fade" id="confirmModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+  <div class="modal fade" id="newprojModal" tabindex="-1" role="dialog" aria-labelledby="modalNewProjLabel" aria-hidden="true">
     <div class="modal-dialog">
       <div class="modal-content">
         <div class="modal-header">
           <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
-          <h4 class="modal-title" id="myModalLabel">Are you sure you want to sign out?</h4>
+          <h4 class="modal-title" id="modalNewProjLabel">Are you sure you want to open a New Project?</h4>
         </div>
+        <div class="modal-body">
+            <p>All unsaved changes will be lost.</p>
+          </div>
         <div class="modal-footer">
-          <a href="sign-in.html" class="btn btn-primary">Yes</a>
-          <button type="button" class="btn btn-default" data-dismiss="modal">No</button>
+          <a href="corrector.html?toml=pyscript.toml&project_file=new" class="btn btn-success">Yes</a>
+          <button type="button" class="btn btn-danger" data-dismiss="modal">No</button>
         </div>
       </div>
     </div>
   </div>
 
-  <script type="text/javascript" src="js/jquery/jquery-3.2.1.min.js"></script> <!-- http://code.jquery.com/jquery-3.2.1.min.js -->
-  <script type="text/javascript" src="js/jquery/jquery-ui.min.js"></script> <!-- http://code.jquery.com/ui/1.12.1/jquery-ui.min.js -->
 
-  <!-- <script src="js/jquery.min.js"></script> -->
-  <script src="js/bootstrap.min.js"></script>
-  <script src="js/Chart.min.js"></script>
-  <script src="js/templatemo_script.js"></script>
-  <script src="js/cliplets_selector.js"></script>
-
-  <!-- Functions Bar -->
-  <script type="text/javascript" src="js/functions_bb.js"></script>
+ 
 
 
 

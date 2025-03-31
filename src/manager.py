@@ -172,23 +172,30 @@ class Overlappinglist2:
     
 
 class Manager:
-    def __init__(self, img, coco_json, font=FONT, font_size=FONT_SIZE, width_bb=WIDTH_BB, score_th=SCORE_TH):
-        self.img_path = img
-        self.img_name = os.path.basename(img)
-        self.img = Image.open(img)
+    def __init__(self, img, coco_json, img_name, font=FONT, font_size=FONT_SIZE, width_bb=WIDTH_BB, score_th=SCORE_TH):
+        
+        # self.img_path = img
+        # self.img_name = os.path.basename(img)
+        # self.img = Image.open(img)
+        
+        self.img_name = img_name
+        self.img = img
         if self.img.mode != "RGB":
             self.img = self.img.convert("RGB")
+
         self.img_width, self.img_height = self.img.size
         self.font = ImageFont.truetype(font=font, size=font_size)
         self.width_bb = width_bb
-        self.cocojsaon_name = coco_json
 
         self.category_encoding = {}
         self.category_decoding = {}
         
         self.color_encoding = {}
         
+        self.cocojsaon_name = os.path.splitext(img_name)[0]+".json"
+        self.jcoco = coco_json
         self._load_json()
+
         self.img_id = None
         for image in self.jcoco["images"]:
             if self.img_name == image['file_name']:
@@ -205,11 +212,12 @@ class Manager:
         self.last_annotation_id = 0
         self.init_overappling_list()
         
+
     def _load_json(self):
         self.BT_category_list = const.BT_TYPE_LIST
 
-        with open(self.cocojsaon_name, encoding="utf-8") as f:
-            self.jcoco = json.load(f)
+        # with open(self.cocojsaon_name, encoding="utf-8") as f:
+        #     self.jcoco = json.load(f)
 
         is_unknown_cat_present = False
         for ind, cat in enumerate(self.jcoco["categories"]):
@@ -225,8 +233,6 @@ class Manager:
             color_ind =  ind % len(const.colors)
             self.color_encoding[cat['id']] = const.colors[color_ind]
 
-            
-
         self.color_encoding[-1] = const.colors[-1]
         
         if not is_unknown_cat_present:
@@ -239,6 +245,7 @@ class Manager:
             if not 'id' in cat:
                 cat['id'] = self.next_annotationID
                 self.next_annotationID += 1        
+
 
     def init_overappling_list(self, image_id=None):
         if self.overlappinglist is not None:
@@ -328,8 +335,8 @@ class Manager:
     def get_img(self):
         return self.img
     
-    def get_img_path(self):
-        return self.img_path
+    # def get_img_path(self):
+    #     return self.img_path
 
     def get_img_id(self):
         return self.img_id
@@ -731,6 +738,8 @@ class Manager:
         for ann in self.jcoco["annotations"]:
             if ann['id'] == id_annotation:
                 for pr_name, pr_value in ann.items():
+                    if pr_name == "id":
+                        pr_name = "annotation_id"
                     if pr_name not in common_info:
                         return_dic[pr_name] = pr_value
                 return return_dic
@@ -763,6 +772,49 @@ class Manager:
         with open(out_path, 'w', encoding="utf-8") as outfile:
             json.dump(self.jcoco, outfile, indent=4)
 
+
+    def delete_json(self, json_path=None):
+        """Delete the coco_json file
+
+        Parameters
+        ----------
+        out_path: str
+            file path for the .json file to delete
+        """
+        if json_path is None:
+            json_path = self.cocojsaon_name
+
+        os.remove(json_path)
+
+    
+    def save_img(self, out_path=None):
+        """Save the image file
+
+        Parameters
+        ----------
+        out_path: str
+            file path for the img out file
+        """
+        if out_path is None:
+            out_path = self.img_name
+
+        self.img.save(out_path)
+    
+
+    def delete_img(self, img_path=None):
+        """Delete the img  file
+
+        Parameters
+        ----------
+        out_path: str
+            file path for the image file to delete
+        """
+        if img_path is None:
+            img_path = self.img_name
+
+        os.remove(img_path)
+
+
     
     def get_current_state_json_stream(self):
 
@@ -792,14 +844,19 @@ class Manager:
 
 if __name__ == "__main__":
     import time
+    from fileformat_handler import FFHandler
 
     print("Test class for manager of Viewer&Corrector")
 
-    img_test = "data/docs/00000/TM1011_P.Cair.Zen.3.59368.jpg"
-    jcoco_test = "data/docs/00000/TM1011_P.Cair.Zen.3.59368.json"
+    projectfile_h = FFHandler()
+
+    papfile_test = "data\docs\\00000\TM065797_The_Curse_of_Artemisia_Fragment_WDL4310.pap"
+
+    image, json_data, name, img_ext = projectfile_h.load_formattedfile(papfile_test)
+    img_name = f"{name}{img_ext}"
 
     start = time.time()
-    m = Manager(img_test, jcoco_test, score_th=0)
+    m = Manager(image, json_data, img_name, score_th=0)
     print(f"Time to load Manager: {time.time()-start}")
 
     # start = time.time()
@@ -817,6 +874,8 @@ if __name__ == "__main__":
     # print(f"Time to Reload Overlapping list: {time.time()-start}")
 
     print(f"Element in overlapping list: { len(m.overlappinglist)}")
+
+
 
 
     
@@ -893,6 +952,11 @@ if __name__ == "__main__":
     img_bb = m.get_img_bboxes()
     img_bb.show() 
 
+    # Save JSON and IMAGE
     m.save_json()
-
     m.save_json("save_json_test.json")
+    m.delete_json()
+    m.delete_json("save_json_test.json")
+
+    m.save_img()
+    m.delete_img()
