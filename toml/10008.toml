@@ -2,7 +2,7 @@ name = "Firsr PyScript App"
 description = "An example of how to build pyscript app."
 packages = ["Pillow", "distinctipy"]
 [files]
-"{FROM}" = "http://localhost:5500"
+"{FROM}" = ""
 "{TO}" = "."
 
 "{FROM}/src/manager.py" = "{TO}/"
@@ -13,4 +13,3 @@ packages = ["Pillow", "distinctipy"]
 
 # END COMMON PART
 "{FROM}/data/docs/10008/sesterzio_nerone.pap" = "{TO}/data/docs/10008/sesterzio_nerone.pap"
-
