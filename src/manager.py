@@ -203,11 +203,18 @@ class Manager:
                 break
 
         self.overlappinglist = None
-        if 0 < score_th < 1:
-            for annotation in self.jcoco["annotations"]:
-                if 'score' in annotation:
-                    if annotation['score'] < score_th:
-                        self.delete_annotation(annotation['id'])
+        # if 0 < score_th < 1:
+        for annotation in self.jcoco["annotations"]:
+            # add standard BT
+            if "tags" not in  annotation:
+                annotation['tags'] = {'BaseType': [DEFAULT_BT]}
+            elif 'BaseType' not in annotation['tags']:
+                annotation['tags'] = {'BaseType': [DEFAULT_BT]}
+
+            # Filter by SCORE
+            if 'score' in annotation:
+                if annotation['score'] < score_th:
+                    self.delete_annotation(annotation['id'])
         
         self.last_annotation_id = 0
         self.init_overappling_list()
