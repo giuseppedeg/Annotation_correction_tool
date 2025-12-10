@@ -1,10 +1,22 @@
-# Annotation Correction Tool
+# GlyFix
 
+https://glyfix.scicore.unibas.ch/
+
+
+<img src="https://glyfix.scicore.unibas.ch/assets/icons/icon.png"  width="200" height="200">
+
+GlyFix is a powerful tool designed to simplify and streamline the management of AI-generated annotations. 
+
+It offers an intuitive interface that enables users to easily view, correct, and refine every aspect of the character annotation process.
+
+# Online tool
+You can reach the tool at the address
+https://glyfix.scicore.unibas.ch/
+
+
+# Local Machine
 ## Prepare your Machine
 To prepare your machine, the only requirement is to install Python. You can easily download the installer from the official website: https://www.python.org/downloads/
-
-**_NOTE:_** Pay attention to select the two checkboxes as shown in the image below!![alt text](assets/python_install.png)
-
 
 ## Download The Application
 You can download the tool by clicking on the green `<> Code` button at the top right corner of this page and selecting the `Download ZIP` option.
