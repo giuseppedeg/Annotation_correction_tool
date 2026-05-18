@@ -28,8 +28,13 @@ Next, extract the ZIP archive to a location on your computer.
 ### Windows
 If you are using a Windows machine, you can run the application by executing the `run.bat` file.
 
-### Other Operating System
+### Other Operating Systems
 For other operating systems, open a terminal in the folder containing all the files of the tool and run the following command:
+1 . Prepare the environment:
+```terminal
+python .\src\create_file_docs.py
+```
+2 . Run the application:
 ```terminal
 python3 -m http.server 5500
 ```
